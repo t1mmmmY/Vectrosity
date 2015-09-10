@@ -10,14 +10,14 @@ public class CellSelector : MonoBehaviour
 
 	void OnGUI()
 	{
-		if (GUILayout.Button("Get random cells"))
-		{
-			cells = GetRandomCells();
-			if (onSelectCells != null)
-			{
-				onSelectCells(cells);
-			}
-		}
+//		if (GUILayout.Button("Get random cells"))
+//		{
+//			cells = GetRandomCells();
+//			if (onSelectCells != null)
+//			{
+//				onSelectCells(cells);
+//			}
+//		}
 	}
 
 

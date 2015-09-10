@@ -15,6 +15,12 @@ public class Cell : MonoBehaviour
 		}
 	}
 
+	public void SetSize(int size)
+	{
+		sprite.width = size;
+		sprite.height = size;
+	}
+
 	public Vector3 position
 	{
 		get 
