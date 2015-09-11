@@ -19,7 +19,7 @@ public class GridviewParameters
 	public float cellPadding = 0.0f;
 
 	[Range(0.0f, 0.5f)]
-	public float margin = 0.02f;
+	public float cellMargin = 0.02f;
 	
 	public Color gridColor;
 	public Color paddingCellColor;
@@ -37,7 +37,7 @@ public class GridviewParameters
 		topBorder = parameters.topBorder;
 		bottomBorder = parameters.bottomBorder;
 		cellPadding = parameters.cellPadding;
-		margin = parameters.margin;
+		cellMargin = parameters.cellMargin;
 		gridColor = parameters.gridColor;
 		paddingCellColor = parameters.paddingCellColor;
 		rows = parameters.rows;
@@ -51,7 +51,7 @@ public class GridviewParameters
 		    a.topBorder == b.topBorder &&
 		    a.bottomBorder == b.bottomBorder &&
 		    a.cellPadding == b.cellPadding &&
-		    a.margin == b.margin &&
+		    a.cellMargin == b.cellMargin &&
 		    a.gridColor == b.gridColor &&
 		    a.paddingCellColor == b.paddingCellColor &&
 		    a.rows == b.rows &&
@@ -71,6 +71,34 @@ public class GridviewParameters
 	}
 }
 
+public class Cell 
+{
+	public int Width { get; private set; }
+	public int Height { get; private set; }
+	public Vector2 Center { get; private set; }
+	public int Padding { get; private set; }
+
+	public Rect GetRectPoints()
+	{
+		Vector2 position = Center - new Vector2(Width / 2f, Height / 2f);
+		return new Rect(position, new Vector2(Width, Height));
+	}
+	
+	public Rect GetPaddinRectPosition()
+	{
+		Vector2 position = Center - new Vector2(Width / 2f - Padding, Height / 2f - Padding);
+		return new Rect(position, new Vector2(Width - Padding * 2, Height - Padding * 2));
+	}
+	
+	public Cell(Vector2 center, int width, int height, int padding)
+	{
+		this.Center = center;
+		this.Width = width;
+		this.Height = height;
+		this.Padding = padding;
+	}
+}
+
 [RequireComponent(typeof(UIPanel))]
 public class VectrosityGridview : MonoBehaviour 
 {
@@ -80,12 +108,14 @@ public class VectrosityGridview : MonoBehaviour
 	GridviewParameters oldGridviewParameters;
 
 	UIPanel panel;
+	VectorLine debugCellLine;
+	VectorLine debugPaddingLine;
 	VectorLine line;
-	VectorLine paddingLine;
+
+	int lineWidth = 5;
+	Color lineColor = Color.blue;
 
 	Cell[,] cells;
-
-	public static System.Action<Cell[]> onGetRandomCells;
 	
 	void Start ()
 	{
@@ -97,18 +127,18 @@ public class VectrosityGridview : MonoBehaviour
 		VectorLine.canvas.planeDistance = 0;
 		VectorLine.canvas.gameObject.layer = panel.gameObject.layer;
 
-		DrawGridview();
+		line = new VectorLine("MainLine", new List<Vector2>(), null, lineWidth, LineType.Discrete, Joins.Weld);
+		line.color = lineColor;
+
+		BuildGrid();
 	}
 
 	void OnGUI()
 	{
 		if (GUILayout.Button("Get random cells"))
 		{
-			Cell[] randomCells = GetRandomCells();
-			if (onGetRandomCells != null)
-			{
-				onGetRandomCells(randomCells);
-			}
+			var randomCells = GetRandomCells();
+			BuildLine(randomCells);
 		}
 	}
 
@@ -118,40 +148,72 @@ public class VectrosityGridview : MonoBehaviour
 
 		if (HaveSomeChanges())
 		{
-			DrawGridview();
+			BuildGrid();
 			oldGridviewParameters.Copy(gridviewParameters);
 		}
 	}
 
-	Cell[] GetRandomCells()
+	public List<Cell> GetRandomCells()
 	{
-		Cell[] randomCells = new Cell[gridviewParameters.columns];
+		List<Cell> result = new List<Cell>();
+		
 		for (int i = 0; i < gridviewParameters.columns; i++)
 		{
 			int randomIndex = Random.Range(0, gridviewParameters.rows);
-			randomCells[i] = cells[randomIndex, i];
-//			Debug.Log(randomCells[i].GetRectPoints());
+			result.Add(cells[randomIndex, i]);
 		}
-		return randomCells;
+		
+		return result;
+	}
+	
+	public List<Cell> GetAllCells()
+	{
+		List<Cell> result = new List<Cell>();
+		
+		for (int i = 0; i < gridviewParameters.rows; i++)
+		{
+			for (int j = 0; j < gridviewParameters.columns; j++)
+			{
+				result.Add(cells[i, j]);
+			}
+		}
+		
+		return result;
 	}
 
-	void DrawGridview()
+	void DrawCells(List<Cell> cells)
+	{
+		// Calculate point count for Discrete type of line that will contain Rects
+		int pointCount = cells.Count * 8;
+		// Clear all debug lines each time (no exception if null)
+		VectorLine.Destroy(ref debugCellLine);
+		VectorLine.Destroy(ref debugPaddingLine);
+
+		// Build line with proper parameters
+		debugCellLine = new VectorLine("DebugCellLine", new Vector2[pointCount], null, 2, LineType.Discrete, Joins.Weld);
+		debugCellLine.color = gridviewParameters.gridColor;
+		debugPaddingLine = new VectorLine("DebugPaddingCellLine", new Vector2[pointCount], null, 2, LineType.Discrete, Joins.Weld);
+		debugPaddingLine.color = gridviewParameters.paddingCellColor;
+		
+		// Build each Cell
+		for(int i = 0; i < cells.Count; i++)
+		{
+			Cell cell = cells[i];
+			debugCellLine.MakeRect(cell.GetRectPoints(), i*8); 
+			debugPaddingLine.MakeRect(cell.GetPaddinRectPosition(), i*8);
+		}
+		
+		// Show results
+		debugCellLine.Draw();
+		debugPaddingLine.Draw();
+	}
+
+	void BuildGrid()
 	{
 		cells = new Cell[gridviewParameters.rows, gridviewParameters.columns];
 
-		if (line != null)
-		{
-			VectorLine.Destroy(ref line);
-		}
-		if (paddingLine != null)
-		{
-			VectorLine.Destroy(ref paddingLine);
-		}
-		line = new VectorLine("Grid", new Vector2[gridviewParameters.rows * gridviewParameters.columns * 8], null, 3f, LineType.Discrete, Joins.Weld);	
-		paddingLine = new VectorLine("Grid", new Vector2[gridviewParameters.rows * gridviewParameters.columns * 8], null, 3f, LineType.Discrete, Joins.Weld);	
-		
 		Vector2 borderPosition = new Vector2(Screen.width * gridviewParameters.leftBorder, Screen.height * (1.0f - gridviewParameters.bottomBorder));
-		Vector2 borderSize = new Vector2(Screen.width * (gridviewParameters.rightBorder - gridviewParameters.leftBorder), 
+		Vector2 gridContentSize = new Vector2(Screen.width * (gridviewParameters.rightBorder - gridviewParameters.leftBorder), 
 		                                 Screen.height * (gridviewParameters.bottomBorder - gridviewParameters.topBorder));
 		int index = 0;
 
@@ -159,45 +221,44 @@ public class VectrosityGridview : MonoBehaviour
 		{
 			for (int j = 0; j < gridviewParameters.columns; j++)
 			{
-				int cellWidth = (int)(borderSize.x / gridviewParameters.columns);
-				int cellHeight = (int)(borderSize.y / gridviewParameters.rows);
+				int cellWidth = (int)(gridContentSize.x / gridviewParameters.columns);
+				int cellHeight = (int)(gridContentSize.y / gridviewParameters.rows);
 				Vector2 cellCenter = new Vector2(borderPosition.x + cellWidth / 2 + j * cellWidth,
 				                                 borderPosition.y + cellHeight / 2 + i * cellHeight);
 
-				cellWidth -= (int)(borderSize.x * gridviewParameters.margin);
-				cellHeight -= (int)(borderSize.y * gridviewParameters.margin);
+				cellWidth -= (int)(gridContentSize.x * gridviewParameters.cellMargin);
+				cellHeight -= (int)(gridContentSize.y * gridviewParameters.cellMargin);
 
 				int cellPadding = (int)(cellWidth * gridviewParameters.cellPadding);
-				bool cellVisible = true;
-				cells[i, j] = new Cell(cellCenter, cellWidth, cellHeight, cellPadding, cellVisible);
-				DrawCell(cells[i, j], index);
+
+				cells[i, j] = new Cell(cellCenter, cellWidth, cellHeight, cellPadding);
 				index++;
 			}
 		}
+
+		DrawCells(GetAllCells());
 	}
 
-	void DrawCell(Cell cell, int index)
-	{
-		line.color = gridviewParameters.gridColor;
-		line.MakeRect(cell.GetRectPoints(), index * 8);
+	void BuildLine(List<Cell> inputCells)
+	{	
+		// Clear line points
+		line.Resize(0);
+		Cell prevCell = null;
+		
+		// Draw all segments and connection lines
+		foreach(var cell in inputCells)
+		{
+			if (prevCell != null)
+			{
+				line.points2.Add(prevCell.Center);
+				line.points2.Add(cell.Center);
+			}
+			prevCell = cell;
+		}
+
+		//Update and draw line
 		line.Draw();
-
-		paddingLine.color = gridviewParameters.paddingCellColor;
-		paddingLine.MakeRect(cell.GetPaddinRectPosition(), index * 8);
-		paddingLine.Draw();
-
-//		DrawRect(cell.GetRectPoints(), gridviewParameters.gridColor, index);
-//		index++;
-//
-//		DrawRect(cell.GetPaddinRectPosition(), gridviewParameters.paddingCellColor, index);
 	}
-
-//	void DrawRect(Rect rect, Color color, int index)
-//	{
-//		line.color = color;
-//		line.MakeRect(rect, index * 8);
-//		line.Draw();
-//	}
 
 	bool HaveSomeChanges()
 	{
