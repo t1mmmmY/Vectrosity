@@ -14,8 +14,15 @@ public class GridviewParameters
 	public float topBorder = 0.1f;
 	[Range(0.0f, 1.0f)]
 	public float bottomBorder = 0.9f;
+
+	[Range(0.0f, 1.0f)]
+	public float cellPadding = 0.0f;
+
+	[Range(0.0f, 0.5f)]
+	public float margin = 0.02f;
 	
 	public Color gridColor;
+	public Color paddingCellColor;
 	
 	[Range(1, 10)]
 	public int rows = 4;
@@ -29,7 +36,10 @@ public class GridviewParameters
 		rightBorder = parameters.rightBorder;
 		topBorder = parameters.topBorder;
 		bottomBorder = parameters.bottomBorder;
+		cellPadding = parameters.cellPadding;
+		margin = parameters.margin;
 		gridColor = parameters.gridColor;
+		paddingCellColor = parameters.paddingCellColor;
 		rows = parameters.rows;
 		columns = parameters.columns;
 	}
@@ -40,7 +50,10 @@ public class GridviewParameters
 		    a.rightBorder == b.rightBorder &&
 		    a.topBorder == b.topBorder &&
 		    a.bottomBorder == b.bottomBorder &&
+		    a.cellPadding == b.cellPadding &&
+		    a.margin == b.margin &&
 		    a.gridColor == b.gridColor &&
+		    a.paddingCellColor == b.paddingCellColor &&
 		    a.rows == b.rows &&
 		    a.columns == b.columns)
 		{
@@ -68,6 +81,7 @@ public class VectrosityGridview : MonoBehaviour
 
 	UIPanel panel;
 	VectorLine line;
+	VectorLine paddingLine;
 
 	Cell[,] cells;
 
@@ -129,8 +143,13 @@ public class VectrosityGridview : MonoBehaviour
 		{
 			VectorLine.Destroy(ref line);
 		}
+		if (paddingLine != null)
+		{
+			VectorLine.Destroy(ref paddingLine);
+		}
 		line = new VectorLine("Grid", new Vector2[gridviewParameters.rows * gridviewParameters.columns * 8], null, 3f, LineType.Discrete, Joins.Weld);	
-
+		paddingLine = new VectorLine("Grid", new Vector2[gridviewParameters.rows * gridviewParameters.columns * 8], null, 3f, LineType.Discrete, Joins.Weld);	
+		
 		Vector2 borderPosition = new Vector2(Screen.width * gridviewParameters.leftBorder, Screen.height * (1.0f - gridviewParameters.bottomBorder));
 		Vector2 borderSize = new Vector2(Screen.width * (gridviewParameters.rightBorder - gridviewParameters.leftBorder), 
 		                                 Screen.height * (gridviewParameters.bottomBorder - gridviewParameters.topBorder));
@@ -144,8 +163,13 @@ public class VectrosityGridview : MonoBehaviour
 				int cellHeight = (int)(borderSize.y / gridviewParameters.rows);
 				Vector2 cellCenter = new Vector2(borderPosition.x + cellWidth / 2 + j * cellWidth,
 				                                 borderPosition.y + cellHeight / 2 + i * cellHeight);
+
+				cellWidth -= (int)(borderSize.x * gridviewParameters.margin);
+				cellHeight -= (int)(borderSize.y * gridviewParameters.margin);
+
+				int cellPadding = (int)(cellWidth * gridviewParameters.cellPadding);
 				bool cellVisible = true;
-				cells[i, j] = new Cell(cellCenter, cellWidth, cellHeight, 0, cellVisible);
+				cells[i, j] = new Cell(cellCenter, cellWidth, cellHeight, cellPadding, cellVisible);
 				DrawCell(cells[i, j], index);
 				index++;
 			}
@@ -154,15 +178,26 @@ public class VectrosityGridview : MonoBehaviour
 
 	void DrawCell(Cell cell, int index)
 	{
-		DrawRect(cell.GetRectPoints(), index);
+		line.color = gridviewParameters.gridColor;
+		line.MakeRect(cell.GetRectPoints(), index * 8);
+		line.Draw();
+
+		paddingLine.color = gridviewParameters.paddingCellColor;
+		paddingLine.MakeRect(cell.GetPaddinRectPosition(), index * 8);
+		paddingLine.Draw();
+
+//		DrawRect(cell.GetRectPoints(), gridviewParameters.gridColor, index);
+//		index++;
+//
+//		DrawRect(cell.GetPaddinRectPosition(), gridviewParameters.paddingCellColor, index);
 	}
 
-	void DrawRect(Rect rect, int index)
-	{
-		line.color = gridviewParameters.gridColor;
-		line.MakeRect(rect, index * 8);
-		line.Draw();
-	}
+//	void DrawRect(Rect rect, Color color, int index)
+//	{
+//		line.color = color;
+//		line.MakeRect(rect, index * 8);
+//		line.Draw();
+//	}
 
 	bool HaveSomeChanges()
 	{
