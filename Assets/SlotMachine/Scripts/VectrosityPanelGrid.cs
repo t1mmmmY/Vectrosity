@@ -14,14 +14,15 @@ public class Cell
 
 	public Rect GetRectPoints()
 	{
-		return new Rect(Center, new Vector2(Width, Height));
+		Vector2 position = Center - new Vector2(Width / 2f, Height / 2f);
+		return new Rect(position, new Vector2(Width, Height));
 	}
 
 	public Vector2 GetLeftMiddlePoint()
 	{
 		return new Vector2(Center.x - Width / 2f, Center.y);
 	}
-
+	
 	public Vector2 GetRightMiddlePoint()
 	{
 		return new Vector2(Center.x + Width / 2f, Center.y);
@@ -43,6 +44,8 @@ public class VectrosityPanelGrid : MonoBehaviour
 	public VectorLine line;
 
 	public int segmentPixelWidth = 50;
+	public float lineWidth = 5f;
+	public Color lineColor = Color.white;
 
 	public Vector2[] screenJoints1;
 	public Vector2[] screenJoints2;
@@ -51,6 +54,11 @@ public class VectrosityPanelGrid : MonoBehaviour
 	private Cell[] cellJoints1;
 	private Cell[] cellJoints2;
 	private Cell[] cellJoints3;
+
+	private Cell[] startCells;
+	private Cell[] endCells;
+
+	private VectorLine debugLine;
 
 	// Use this for initialization
 	void Start ()
@@ -62,22 +70,19 @@ public class VectrosityPanelGrid : MonoBehaviour
 		VectorLine.canvas.gameObject.layer = panel.gameObject.layer;
 		//camera.cachedCamera.cull
 
-		line = new VectorLine("MainLine", new List<Vector2>(), null, 5f, LineType.Discrete, Joins.Weld);
+		line = new VectorLine("MainLine", new List<Vector2>(), null, lineWidth, LineType.Discrete, Joins.Weld);
+		line.color = lineColor;
+
 		// Convert arrays of joints to arrays of cells
 		cellJoints1 = screenJoints1.Select(i => MakeCell(VectorRelativeToAbsolute(i))).ToArray<Cell>();
 		cellJoints2 = screenJoints2.Select(i => MakeCell(VectorRelativeToAbsolute(i))).ToArray<Cell>();
 		cellJoints3 = screenJoints3.Select(i => MakeCell(VectorRelativeToAbsolute(i))).ToArray<Cell>();
 
-		StartCoroutine(ChangeColor());
-	}
+		List<Cell> cells = cellJoints1.ToList<Cell>();
+		cells.AddRange(cellJoints2.ToList<Cell>());
+		cells.AddRange(cellJoints3.ToList<Cell>());
 
-	IEnumerator ChangeColor()
-	{
-		line.color = new Color(Random.value, Random.value, Random.value);
-		yield return new WaitForSeconds(1.0f);
-
-		//Repeat again
-		StartCoroutine(ChangeColor());
+		DrawCells(cells);
 	}
 
 	Vector2 VectorRelativeToAbsolute(Vector2 input)
@@ -110,41 +115,62 @@ public class VectrosityPanelGrid : MonoBehaviour
 		// Clear line points
 		line.Resize(0);
 
-		// Adding initial point
-		Vector2 posStart = new Vector2(0, 0); //left middle screen point
-		Vector2 posEnd = Vector2.Lerp(start[0].GetLeftMiddlePoint(), end[0].GetLeftMiddlePoint(), lerpValue);
-
-		line.points2.Add(VectorRelativeToAbsolute(posStart));
-		line.points2.Add(posEnd);
-
-		// Adding all segments
-		for (int i = 1; i < start.Length; i++)
+		// Draw all segments and connection lines
+		for (int i = 0; i < start.Length; i++)
 		{
-			if (start[i-1].IsVisible)
+			// Draw segments and theirs stumps in order to get nice segment/line joints
+			// Order is important to have working Joins.Weld option
+
+			// Avoid drawing left stump for first segment
+			if (i != 0)
 			{
-				line.points2.Add(Vector2.Lerp(start[i-1].GetLeftMiddlePoint(), end[i-1].GetLeftMiddlePoint(), lerpValue));
-				line.points2.Add(Vector2.Lerp(start[i-1].GetRightMiddlePoint(), end[i-1].GetRightMiddlePoint(), lerpValue));
+				line.points2.Add(Vector2.Lerp(start[i].GetLeftMiddlePoint(), end[i].GetLeftMiddlePoint(), lerpValue) - new Vector2(lineWidth / 2f, 0f));
+				line.points2.Add(Vector2.Lerp(start[i].GetLeftMiddlePoint(), end[i].GetLeftMiddlePoint(), lerpValue));
 			}
-
-			line.points2.Add(Vector2.Lerp(start[i-1].GetRightMiddlePoint(), end[i-1].GetRightMiddlePoint(), lerpValue));
-			line.points2.Add(Vector2.Lerp(start[i].GetLeftMiddlePoint(), end[i].GetLeftMiddlePoint(), lerpValue));
-
-			if (end[i-1].IsVisible)
+			// Draw segment itself
+			if (start[i].IsVisible)
 			{
 				line.points2.Add(Vector2.Lerp(start[i].GetLeftMiddlePoint(), end[i].GetLeftMiddlePoint(), lerpValue));
 				line.points2.Add(Vector2.Lerp(start[i].GetRightMiddlePoint(), end[i].GetRightMiddlePoint(), lerpValue));
 			}
+			// Avoid drawing right stump for last segment
+			if (i != start.Length - 1)
+			{
+				line.points2.Add(Vector2.Lerp(start[i].GetRightMiddlePoint(), end[i].GetRightMiddlePoint(), lerpValue));
+				line.points2.Add(Vector2.Lerp(start[i].GetRightMiddlePoint(), end[i].GetRightMiddlePoint(), lerpValue) + new Vector2(lineWidth / 2f, 0f));
+			}
+			// Draw segment connection lines (we need to do this after drawing segment in order to make Joins.Weld option work)
+			if (i < (start.Length - 1))
+			{
+				//Draw connection cell line
+				line.points2.Add(Vector2.Lerp(start[i].GetRightMiddlePoint(), end[i].GetRightMiddlePoint(), lerpValue) + new Vector2(lineWidth / 2f, 0f));
+				line.points2.Add(Vector2.Lerp(start[i+1].GetLeftMiddlePoint(), end[i+1].GetLeftMiddlePoint(), lerpValue) - new Vector2(lineWidth / 2f, 0f));
+			}
 		}
-
-		// Adding final point
-		posStart = Vector2.Lerp(start[start.Length - 1].GetRightMiddlePoint(), end[end.Length - 1].GetRightMiddlePoint(), lerpValue);
-		posEnd = new Vector2(100f, 0f); //right middle screen point
-
-		line.points2.Add(posStart);
-		line.points2.Add(VectorRelativeToAbsolute(posEnd));
 
 		//Update and draw line
 		line.Draw();
+	}
+	
+	void DrawCells(List<Cell> cells)
+	{
+		// Calculate point count for Discrete type of line that will contain Rects
+		int pointCount = cells.Count * 8;
+		// Clear debug line each time (no exception if null)
+		VectorLine.Destroy(ref debugLine);
+		// Build line with proper parameters
+		debugLine = new VectorLine("DebugLine", new Vector2[pointCount], null, 1, LineType.Discrete, Joins.Weld);
+		debugLine.color = Color.white;
+
+		// Build each Cell
+		for(int i = 0; i < cells.Count; i++)
+		{
+			Cell cell = cells[i];
+			debugLine.MakeRect(cell.GetRectPoints(), i*8); 
+		}
+
+		// Show results
+		debugLine.Draw();
 	}
 
 	// Update is called once per frame
@@ -155,15 +181,20 @@ public class VectrosityPanelGrid : MonoBehaviour
 
 		if (num == 0)
 		{
-			BuildLine(cellJoints1, cellJoints2, lerp); 
+			startCells = cellJoints1;
+			endCells = cellJoints2;
 		}
 		else if (num == 1)
 		{
-			BuildLine(cellJoints2, cellJoints3, lerp); 
+			startCells = cellJoints2;
+			endCells = cellJoints3;
 		}
 		else if (num == 2)
 		{
-			BuildLine(cellJoints3, cellJoints1, lerp); 
+			startCells = cellJoints3;
+			endCells = cellJoints1;
 		}
+
+		BuildLine(startCells, endCells, lerp); 
 	}
 }
