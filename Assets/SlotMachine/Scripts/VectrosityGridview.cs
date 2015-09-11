@@ -21,6 +21,41 @@ public class GridviewParameters
 	public int rows = 4;
 	[Range(1, 10)]
 	public int columns = 4;
+
+
+	public void Copy(GridviewParameters parameters)
+	{
+		leftBorder = parameters.leftBorder;
+		rightBorder = parameters.rightBorder;
+		topBorder = parameters.topBorder;
+		bottomBorder = parameters.bottomBorder;
+		gridColor = parameters.gridColor;
+		rows = parameters.rows;
+		columns = parameters.columns;
+	}
+
+	public static bool operator ==(GridviewParameters a, GridviewParameters b)
+	{
+		if (a.leftBorder == b.leftBorder && 
+		    a.rightBorder == b.rightBorder &&
+		    a.topBorder == b.topBorder &&
+		    a.bottomBorder == b.bottomBorder &&
+		    a.gridColor == b.gridColor &&
+		    a.rows == b.rows &&
+		    a.columns == b.columns)
+		{
+			return true;
+		}
+		else
+		{
+			return false;
+		}
+	}
+
+	public static bool operator !=(GridviewParameters a, GridviewParameters b)
+	{
+		return !(a == b);
+	}
 }
 
 [RequireComponent(typeof(UIPanel))]
@@ -29,6 +64,7 @@ public class VectrosityGridview : MonoBehaviour
 	[SerializeField] UICamera camera;
 
 	[SerializeField] GridviewParameters gridviewParameters;
+	GridviewParameters oldGridviewParameters;
 
 	UIPanel panel;
 	VectorLine line;
@@ -40,7 +76,8 @@ public class VectrosityGridview : MonoBehaviour
 	void Start ()
 	{
 		panel = GetComponent<UIPanel>();
-
+		oldGridviewParameters = new GridviewParameters();
+		oldGridviewParameters.Copy(gridviewParameters);
 
 		VectorLine.SetCanvasCamera(camera.cachedCamera);
 		VectorLine.canvas.planeDistance = 0;
@@ -61,13 +98,14 @@ public class VectrosityGridview : MonoBehaviour
 		}
 	}
 
-	void LateUpdate()
+	void FixedUpdate()
 	{
 		//I need to check changes first
 
 		if (HaveSomeChanges())
 		{
 			DrawGridview();
+			oldGridviewParameters.Copy(gridviewParameters);
 		}
 	}
 
@@ -86,7 +124,11 @@ public class VectrosityGridview : MonoBehaviour
 	void DrawGridview()
 	{
 		cells = new Cell[gridviewParameters.rows, gridviewParameters.columns];
-		
+
+		if (line != null)
+		{
+			VectorLine.Destroy(ref line);
+		}
 		line = new VectorLine("Grid", new Vector2[gridviewParameters.rows * gridviewParameters.columns * 8], null, 3f, LineType.Discrete, Joins.Weld);	
 
 		Vector2 borderPosition = new Vector2(Screen.width * gridviewParameters.leftBorder, Screen.height * (1.0f - gridviewParameters.bottomBorder));
@@ -124,7 +166,7 @@ public class VectrosityGridview : MonoBehaviour
 
 	bool HaveSomeChanges()
 	{
-		return false;
+		return oldGridviewParameters != gridviewParameters;
 	}
 
 }
