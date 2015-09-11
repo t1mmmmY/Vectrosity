@@ -4,7 +4,7 @@ using System.Collections.Generic;
 
 public class SlotMachineGenerator : MonoBehaviour 
 {
-	[SerializeField] SlotMachine slotMachine;
+//	[SerializeField] SlotMachine slotMachine;
 
 	[Range(2, 10)]
 	[SerializeField] int countRolls = 4;
@@ -14,7 +14,7 @@ public class SlotMachineGenerator : MonoBehaviour
 
 
 	//Not working correctly yet
-	[Range(0.0f, 0.2f)]
+	[Range(0.0f, 0.1f)]
 	[SerializeField] float border = 0.01f; 
 
 	[SerializeField] Roll rollPrefab;
@@ -31,11 +31,12 @@ public class SlotMachineGenerator : MonoBehaviour
 	void Start()
 	{
 		float step = 1.0f / countRolls;
-		int cellSize = standardCellSize * 4 / countRolls;
+		int cellSize = (int)(standardCellSize * 4 / countRolls * (1.0f - border * 2));
 
 		for (int i = 0; i < countRolls; i++)
 		{
 			Roll newRoll = NGUITools.AddChild(parentWidget.gameObject, rollPrefab.gameObject).GetComponent<Roll>();
+			newRoll.gameObject.name = string.Format("{0}_{1}", rollPrefab.gameObject.name, i);
 
 			//Set anchors
 			float leftBorder = step * i + border;
@@ -50,6 +51,6 @@ public class SlotMachineGenerator : MonoBehaviour
 
 			rolls.Add(newRoll);
 		}
-		slotMachine.Init( rolls.ToArray());
+		SlotMachine.Instance.Init(rolls.ToArray());
 	}
 }

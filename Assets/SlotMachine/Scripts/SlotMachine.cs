@@ -2,7 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 
-public class SlotMachine : MonoBehaviour 
+public class SlotMachine : BaseSingleton<SlotMachine> 
 {
 	[SerializeField] Roll[] rolls;
 
@@ -14,6 +14,18 @@ public class SlotMachine : MonoBehaviour
 			rolls[i] = newRolls[i];
 			rolls[i].Init();
 		}
+	}
+
+	public Dictionary<int, List<Cell>> GetVisibleCells()
+	{
+		Dictionary<int, List<Cell>> dictionaryCells = new Dictionary<int, List<Cell>>();
+//		List<Cell> visibleCells = new List<Cell>();
+		for (int i = 0; i < rolls.Length; i++)
+		{
+			dictionaryCells.Add(i, rolls[i].GetVisibleCells());
+//			visibleCells.AddRange(rolls[i].GetVisibleCells());
+		}
+		return dictionaryCells;
 	}
 
 }

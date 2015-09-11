@@ -1,18 +1,23 @@
 ﻿using UnityEngine;
 using System.Collections;
 
+[RequireComponent(typeof(UI2DSprite))]
 public class Cell : MonoBehaviour 
 {
 	//May be changed
 	UI2DSprite sprite;
 
+	public bool visible
+	{
+		get 
+		{
+			return sprite.isVisible;
+		}
+	}
+
 	void Awake()
 	{
 		sprite = GetComponent<UI2DSprite>();
-		if (sprite == null)
-		{
-			Debug.LogWarning("UI2DSprite not found");
-		}
 	}
 
 	public void SetSize(int size)
@@ -34,12 +39,6 @@ public class Cell : MonoBehaviour
 	{
 		get
 		{
-			if (sprite == null)
-			{
-				Debug.LogError("UI2DSprite not found");
-				return new Rect(Vector2.zero, Vector2.zero);
-			}
-
 			//May be changed
 			return new Rect((Vector2)position, sprite.localSize);
 		}

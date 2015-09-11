@@ -5,18 +5,17 @@ using System.Collections.Generic;
 [RequireComponent(typeof(UIPanel))]
 public class Roll : MonoBehaviour 
 {
-//	[Range(0.0f, 1.0f)]
-	float _leftBorder = 0.0f;
-//	[Range(0.0f, 1.0f)]
-	float _rightBorder = 1.0f;
 	[SerializeField] Cell[] cellPrefabs;
-	int _cellsCount = 10;
 	[SerializeField] UIGrid grid;
 
+	float _leftBorder = 0.0f;
+	float _rightBorder = 1.0f;
+	int _cellsCount = 10;
+	int _cellSize = 180;
+	
 	UIPanel panel;
 	List<Cell> cells;
 	bool reposition = false;
-	int _cellSize = 180;
 
 	void Awake()
 	{
@@ -53,13 +52,28 @@ public class Roll : MonoBehaviour
 		{
 			int randomCellNumber = Random.Range(0, cellPrefabs.Length);
 			Cell newCell = NGUITools.AddChild(grid.gameObject, cellPrefabs[randomCellNumber].gameObject).GetComponent<Cell>();
+			newCell.gameObject.name = string.Format("{0}_{1}", cellPrefabs[randomCellNumber].gameObject.name, i);
 			newCell.SetSize(_cellSize);
 			cells.Add(newCell);
 		}
 		grid.Reposition();
 	}
 
+	public List<Cell> GetVisibleCells()
+	{
+		List<Cell> visibleCells = new List<Cell>();
+		foreach (Cell cell in cells)
+		{
+			if (cell.visible)
+			{
+				visibleCells.Add(cell);
+			}
+		}
 
+		return visibleCells;
+	}
+
+	//Reposition rolls
 	void LateUpdate()
 	{
 		if (!reposition)
