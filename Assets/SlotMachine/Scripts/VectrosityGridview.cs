@@ -92,7 +92,7 @@ public class VectrosityGridview : MonoBehaviour
 				Vector2 cellCenter = new Vector2(borderPosition.x + cellWidth / 2 + j * cellWidth,
 				                                 borderPosition.y + cellHeight / 2 + i * cellHeight);
 				bool cellVisible = true;
-				cells[i, j] = new Cell(cellCenter, cellWidth, cellHeight, cellVisible);
+				cells[i, j] = new Cell(cellCenter, cellWidth, cellHeight, 0, cellVisible);
 				DrawCell(cells[i, j], index);
 				index++;
 			}
