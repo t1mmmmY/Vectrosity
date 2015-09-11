@@ -28,6 +28,8 @@ public class VectrosityGridview : MonoBehaviour
 	VectorLine line;
 
 	Cell[,] cells;
+
+	public static System.Action<Cell[]> onGetRandomCells;
 	
 	void Start ()
 	{
@@ -41,11 +43,35 @@ public class VectrosityGridview : MonoBehaviour
 		DrawGridview();
 	}
 
+	void OnGUI()
+	{
+		if (GUILayout.Button("Get random cells"))
+		{
+			Cell[] randomCells = GetRandomCells();
+			if (onGetRandomCells != null)
+			{
+				onGetRandomCells(randomCells);
+			}
+		}
+	}
+
 //	void FixedUpdate()
 //	{
 //		//I need to check changes first
 //		DrawGridview();
 //	}
+
+	Cell[] GetRandomCells()
+	{
+		Cell[] randomCells = new Cell[columns];
+		for (int i = 0; i < columns; i++)
+		{
+			int randomIndex = Random.Range(0, rows);
+			randomCells[i] = cells[randomIndex, i];
+//			Debug.Log(randomCells[i].GetRectPoints());
+		}
+		return randomCells;
+	}
 
 	void DrawGridview()
 	{
