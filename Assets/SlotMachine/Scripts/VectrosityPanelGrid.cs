@@ -7,33 +7,121 @@ using Vectrosity;
 [RequireComponent(typeof(UIPanel))]
 public class Cell 
 {
-	public int Width { get; set; }
-	public int Height { get; set; }
-	public Vector2 Center { get; set; }
-	public bool IsVisible { get; set; }
+	public int Width { get; private set; }
+	public int Height { get; private set; }
+	public Vector2 Center { get; private set; }
+	public int Padding { get; private set; }
 
+	public bool IsVisible { get; set; }
+	
 	public Rect GetRectPoints()
 	{
 		Vector2 position = Center - new Vector2(Width / 2f, Height / 2f);
 		return new Rect(position, new Vector2(Width, Height));
 	}
 
+	public Rect GetPaddinRectPosition()
+	{
+		Vector2 position = Center - new Vector2(Width / 2f - Padding, Height / 2f - Padding);
+		return new Rect(position, new Vector2(Width - Padding * 2, Height - Padding * 2));
+	}
+
 	public Vector2 GetLeftMiddlePoint()
 	{
-		return new Vector2(Center.x - Width / 2f, Center.y);
+		return new Vector2(Center.x - (Width / 2f - Padding), Center.y);
 	}
 	
 	public Vector2 GetRightMiddlePoint()
 	{
-		return new Vector2(Center.x + Width / 2f, Center.y);
+		return new Vector2(Center.x + (Width / 2f - Padding), Center.y);
 	}
 
-	public Cell(Vector2 center, int width, int height, bool isVisible)
+	public Cell(Vector2 center, int width, int height, int padding, bool isVisible)
 	{
 		this.Center = center;
 		this.Width = width;
 		this.Height = height;
+		this.Padding = padding;
 		this.IsVisible = isVisible;
+	}
+}
+
+public class CellGrid
+{
+	public int Width { get; set; }
+	public int Height { get; set; }
+	public Vector2 Center { get; set; }
+	public int RowCount { get; set; }
+	public int ColumnCount { get; set; }
+	public int Padding { get; set; }
+	public int Margin { get; set; }
+
+	private Cell[,] cells;
+
+	public CellGrid(Vector2 center, int width, int height, int rowCount, int columnCount, int padding, int margin)
+	{
+		this.Center = center;
+		this.Width = width;
+		this.Height = height;
+		this.RowCount = rowCount;
+		this.ColumnCount = columnCount;
+		this.Padding = padding;
+		this.Margin = margin;
+
+		cells = new Cell[this.ColumnCount, this.RowCount];
+		BuildCells();
+	}
+
+	void BuildCells()
+	{
+		for (int i = 0; i < this.ColumnCount; i++)
+		{
+			for (int j = 0; j < this.RowCount; j++)
+			{
+				int width = Mathf.CeilToInt(Width / ColumnCount - 2 * Margin);
+				int height = Mathf.CeilToInt(Height / RowCount - 2 * Margin);
+
+				float centerX = (i + 1) * Width / ColumnCount - width / 2f - Margin;
+				float centerY = (j + 1) * Height / RowCount - height / 2f - Margin;
+
+				cells[i, j] = new Cell(new Vector2(centerX, centerY), width, height, this.Padding, true);
+			}
+		}
+	}
+
+	private Cell GetRandomCellInColumn(int columnNumber)
+	{
+		// Generate random cell's index from that column. Avoid Random.value == 1f
+		int randomItemNumber = Mathf.FloorToInt((Random.value - 0.00001f) * RowCount);
+		return cells[columnNumber, randomItemNumber];
+	}
+
+	public List<Cell> GetRandomLine()
+	{
+		List<Cell> result = new List<Cell>();
+
+		// Going through each column and get random Cell from it
+		for(int i = 0; i < ColumnCount; i++)
+		{
+			result.Add(GetRandomCellInColumn(i));
+		}
+
+		return result;
+	}
+
+	public List<Cell> GetAllCells()
+	{
+		List<Cell> result = new List<Cell>();
+
+		for (int i = 0; i < this.ColumnCount; i++)
+		{
+			for (int j = 0; j < this.RowCount; j++)
+			{
+				result.Add(cells[i, j]);
+			}
+		}
+
+		return result;
 	}
 }
 
@@ -47,18 +135,13 @@ public class VectrosityPanelGrid : MonoBehaviour
 	public float lineWidth = 5f;
 	public Color lineColor = Color.white;
 
-	public Vector2[] screenJoints1;
-	public Vector2[] screenJoints2;
-	public Vector2[] screenJoints3;
-
-	private Cell[] cellJoints1;
-	private Cell[] cellJoints2;
-	private Cell[] cellJoints3;
+	private CellGrid grid;
 
 	private Cell[] startCells;
 	private Cell[] endCells;
 
-	private VectorLine debugLine;
+	private VectorLine debugCellLine;
+	private VectorLine debugCellPaddingLine;
 
 	// Use this for initialization
 	void Start ()
@@ -70,19 +153,24 @@ public class VectrosityPanelGrid : MonoBehaviour
 		VectorLine.canvas.gameObject.layer = panel.gameObject.layer;
 		//camera.cachedCamera.cull
 
+		grid = new CellGrid(center: new Vector2(Screen.width / 2, Screen.height / 2),
+		                    width: Screen.width,
+		                    height: Screen.height,
+		                    rowCount: 3,
+		                    columnCount: 5,
+		                    padding: 10,
+		                    margin: 10);
+
+		// For debug purposes
+		DrawCells(grid.GetAllCells());
+
+		// Set up main line
 		line = new VectorLine("MainLine", new List<Vector2>(), null, lineWidth, LineType.Discrete, Joins.Weld);
 		line.color = lineColor;
 
-		// Convert arrays of joints to arrays of cells
-		cellJoints1 = screenJoints1.Select(i => MakeCell(VectorRelativeToAbsolute(i))).ToArray<Cell>();
-		cellJoints2 = screenJoints2.Select(i => MakeCell(VectorRelativeToAbsolute(i))).ToArray<Cell>();
-		cellJoints3 = screenJoints3.Select(i => MakeCell(VectorRelativeToAbsolute(i))).ToArray<Cell>();
-
-		List<Cell> cells = cellJoints1.ToList<Cell>();
-		cells.AddRange(cellJoints2.ToList<Cell>());
-		cells.AddRange(cellJoints3.ToList<Cell>());
-
-		DrawCells(cells);
+		// Set initial random cells
+		startCells = grid.GetRandomLine().ToArray();
+		endCells = grid.GetRandomLine().ToArray();
 	}
 
 	Vector2 VectorRelativeToAbsolute(Vector2 input)
@@ -95,11 +183,6 @@ public class VectrosityPanelGrid : MonoBehaviour
 		result.y += Screen.height / 2f; //apply shift
 
 		return result;
-	}
-
-	Cell MakeCell(Vector2 position)
-	{
-		return new Cell(position, segmentPixelWidth, segmentPixelWidth, Random.value > 0.5f); //square cell
 	}
 
 	void BuildLine(Cell[] start, Cell[] end, float lerpValue)
@@ -156,43 +239,49 @@ public class VectrosityPanelGrid : MonoBehaviour
 	{
 		// Calculate point count for Discrete type of line that will contain Rects
 		int pointCount = cells.Count * 8;
-		// Clear debug line each time (no exception if null)
-		VectorLine.Destroy(ref debugLine);
+		// Clear all debug lines each time (no exception if null)
+		VectorLine.Destroy(ref debugCellLine);
+		VectorLine.Destroy(ref debugCellPaddingLine);
+
 		// Build line with proper parameters
-		debugLine = new VectorLine("DebugLine", new Vector2[pointCount], null, 1, LineType.Discrete, Joins.Weld);
-		debugLine.color = Color.white;
+		debugCellLine = new VectorLine("DebugLine", new Vector2[pointCount], null, 1, LineType.Discrete, Joins.Weld);
+		debugCellLine.color = Color.white;
+		debugCellPaddingLine = new VectorLine("DebugPaddingLine", new Vector2[pointCount], null, 1, LineType.Discrete, Joins.Weld);
+		debugCellPaddingLine.color = Color.blue;
 
 		// Build each Cell
 		for(int i = 0; i < cells.Count; i++)
 		{
 			Cell cell = cells[i];
-			debugLine.MakeRect(cell.GetRectPoints(), i*8); 
+			debugCellLine.MakeRect(cell.GetRectPoints(), i*8); 
+			debugCellPaddingLine.MakeRect(cell.GetPaddinRectPosition(), i*8);
 		}
 
 		// Show results
-		debugLine.Draw();
+		debugCellLine.Draw();
+		debugCellPaddingLine.Draw();
 	}
+
+	bool isRebuild = false;
+	float lastLerp = 999f;
 
 	// Update is called once per frame
 	void Update ()
 	{
-		int num = Mathf.FloorToInt(Mathf.Repeat(Time.time, 3f));
 		float lerp = Mathf.Repeat(Time.time, 1f);
 
-		if (num == 0)
+		// We started loop again (tail is bigger than head)
+		if (lastLerp > lerp)
 		{
-			startCells = cellJoints1;
-			endCells = cellJoints2;
+			isRebuild = false;
 		}
-		else if (num == 1)
+		lastLerp = lerp;
+
+		if (!isRebuild)
 		{
-			startCells = cellJoints2;
-			endCells = cellJoints3;
-		}
-		else if (num == 2)
-		{
-			startCells = cellJoints3;
-			endCells = cellJoints1;
+			isRebuild = true;
+			startCells = endCells;
+			endCells = grid.GetRandomLine().ToArray<Cell>();
 		}
 
 		BuildLine(startCells, endCells, lerp); 
