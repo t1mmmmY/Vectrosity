@@ -9,6 +9,7 @@ public class LineController : MonoBehaviour
 {
 	public int lineWidth = 5;
 	public int maxLineCount = 10;
+	public bool smoothLine = false;
 
 	Queue<VectorLine> lineQueue = new Queue<VectorLine>();
 	VectrosityGridview grid;
@@ -37,24 +38,23 @@ public class LineController : MonoBehaviour
 			VectorLine.Destroy(ref firstLine);
 		}
 
-		var line = new VectorLine("Line " + count, new List<Vector2>(), null, lineWidth, LineType.Discrete, Joins.Weld);
+		var line = new VectorLine("Line " + count, new List<Vector2>(), null, lineWidth, LineType.Continuous, Joins.Weld);
 		line.color = new Color(Random.value, Random.value, Random.value);
 
-		// Clear line points
-		line.Resize(0);
-		Cell prevCell = null;
-		
-		// Draw all segments and connection lines
-		foreach(var cell in inputCells)
+		if (smoothLine)
 		{
-			if (prevCell != null)
+			line.Resize(100);
+			line.MakeSpline(inputCells.Select(i => i.Center).ToArray());
+		}
+		else
+		{
+			// Draw all segments and connection lines
+			foreach(var cell in inputCells)
 			{
-				line.points2.Add(prevCell.Center);
 				line.points2.Add(cell.Center);
 			}
-			prevCell = cell;
 		}
-		
+
 		//Update and draw Line
 		line.Draw();
 
