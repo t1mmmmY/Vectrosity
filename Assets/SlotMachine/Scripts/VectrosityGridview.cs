@@ -3,26 +3,32 @@ using System.Collections;
 using System.Collections.Generic;
 using Vectrosity;
 
+[System.Serializable]
+public class GridviewParameters
+{
+	[Range(0.0f, 1.0f)]
+	public float leftBorder = 0.1f;
+	[Range(0.0f, 1.0f)]
+	public float rightBorder = 0.9f;
+	[Range(0.0f, 1.0f)]
+	public float topBorder = 0.1f;
+	[Range(0.0f, 1.0f)]
+	public float bottomBorder = 0.9f;
+	
+	public Color gridColor;
+	
+	[Range(1, 10)]
+	public int rows = 4;
+	[Range(1, 10)]
+	public int columns = 4;
+}
+
 [RequireComponent(typeof(UIPanel))]
 public class VectrosityGridview : MonoBehaviour 
 {
 	[SerializeField] UICamera camera;
 
-	[Range(0.0f, 1.0f)]
-	[SerializeField] float leftBorder = 0.1f;
-	[Range(0.0f, 1.0f)]
-	[SerializeField] float rightBorder = 0.9f;
-	[Range(0.0f, 1.0f)]
-	[SerializeField] float topBorder = 0.1f;
-	[Range(0.0f, 1.0f)]
-	[SerializeField] float bottomBorder = 0.9f;
-
-	[SerializeField] Color gridColor;
-
-	[Range(1, 10)]
-	[SerializeField] int rows = 4;
-	[Range(1, 10)]
-	[SerializeField] int columns = 4;
+	[SerializeField] GridviewParameters gridviewParameters;
 
 	UIPanel panel;
 	VectorLine line;
@@ -55,18 +61,22 @@ public class VectrosityGridview : MonoBehaviour
 		}
 	}
 
-//	void FixedUpdate()
-//	{
-//		//I need to check changes first
-//		DrawGridview();
-//	}
+	void LateUpdate()
+	{
+		//I need to check changes first
+
+		if (HaveSomeChanges())
+		{
+			DrawGridview();
+		}
+	}
 
 	Cell[] GetRandomCells()
 	{
-		Cell[] randomCells = new Cell[columns];
-		for (int i = 0; i < columns; i++)
+		Cell[] randomCells = new Cell[gridviewParameters.columns];
+		for (int i = 0; i < gridviewParameters.columns; i++)
 		{
-			int randomIndex = Random.Range(0, rows);
+			int randomIndex = Random.Range(0, gridviewParameters.rows);
 			randomCells[i] = cells[randomIndex, i];
 //			Debug.Log(randomCells[i].GetRectPoints());
 		}
@@ -75,20 +85,21 @@ public class VectrosityGridview : MonoBehaviour
 
 	void DrawGridview()
 	{
-		cells = new Cell[rows, columns];
+		cells = new Cell[gridviewParameters.rows, gridviewParameters.columns];
 		
-		line = new VectorLine("Grid", new Vector2[rows * columns * 8], null, 3f, LineType.Discrete, Joins.Weld);	
+		line = new VectorLine("Grid", new Vector2[gridviewParameters.rows * gridviewParameters.columns * 8], null, 3f, LineType.Discrete, Joins.Weld);	
 
-		Vector2 borderPosition = new Vector2(Screen.width * leftBorder, Screen.height * (1.0f - bottomBorder));
-		Vector2 borderSize = new Vector2(Screen.width * (rightBorder - leftBorder), Screen.height * (bottomBorder - topBorder));
+		Vector2 borderPosition = new Vector2(Screen.width * gridviewParameters.leftBorder, Screen.height * (1.0f - gridviewParameters.bottomBorder));
+		Vector2 borderSize = new Vector2(Screen.width * (gridviewParameters.rightBorder - gridviewParameters.leftBorder), 
+		                                 Screen.height * (gridviewParameters.bottomBorder - gridviewParameters.topBorder));
 		int index = 0;
 
-		for (int i = 0; i < rows; i++)
+		for (int i = 0; i < gridviewParameters.rows; i++)
 		{
-			for (int j = 0; j < columns; j++)
+			for (int j = 0; j < gridviewParameters.columns; j++)
 			{
-				int cellWidth = (int)(borderSize.x / columns);
-				int cellHeight = (int)(borderSize.y / rows);
+				int cellWidth = (int)(borderSize.x / gridviewParameters.columns);
+				int cellHeight = (int)(borderSize.y / gridviewParameters.rows);
 				Vector2 cellCenter = new Vector2(borderPosition.x + cellWidth / 2 + j * cellWidth,
 				                                 borderPosition.y + cellHeight / 2 + i * cellHeight);
 				bool cellVisible = true;
@@ -106,8 +117,14 @@ public class VectrosityGridview : MonoBehaviour
 
 	void DrawRect(Rect rect, int index)
 	{
-		line.color = gridColor;
+		line.color = gridviewParameters.gridColor;
 		line.MakeRect(rect, index * 8);
 		line.Draw();
 	}
+
+	bool HaveSomeChanges()
+	{
+		return false;
+	}
+
 }
