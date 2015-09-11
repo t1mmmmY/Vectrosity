@@ -229,10 +229,11 @@ public class VectrosityGridview : MonoBehaviour
 		debugCellLine = new VectorLine("Grid", new Vector2[gridviewParameters.rows * gridviewParameters.columns * 8], null, 3f, LineType.Discrete, Joins.Weld);	
 		debugPaddingLine = new VectorLine("Grid", new Vector2[gridviewParameters.rows * gridviewParameters.columns * 8], null, 3f, LineType.Discrete, Joins.Weld);	
 		
-		Vector2 borderPosition = new Vector2(gridviewParameters.shift.x + screenSize.x * gridviewParameters.leftBorder, 
-		                                     gridviewParameters.shift.y + screenSize.y * (1.0f - gridviewParameters.bottomBorder));
 		Vector2 borderSize = new Vector2(screenSize.x * (gridviewParameters.rightBorder - gridviewParameters.leftBorder), 
 		                                 screenSize.y * (gridviewParameters.bottomBorder - gridviewParameters.topBorder));
+		Vector2 borderPosition = new Vector2(Screen.width / 2 - borderSize.x / 2 + gridviewParameters.shift.x + screenSize.x * gridviewParameters.leftBorder, 
+		                                     Screen.height / 2 - borderSize.y / 2 + gridviewParameters.shift.y + screenSize.y * (1.0f - gridviewParameters.bottomBorder));
+
 		int index = 0;
 		
 		for (int i = 0; i < gridviewParameters.rows; i++)
@@ -241,8 +242,8 @@ public class VectrosityGridview : MonoBehaviour
 			{
 				int cellWidth = (int)(borderSize.x / gridviewParameters.columns);
 				int cellHeight = (int)(borderSize.y / gridviewParameters.rows);
-				Vector2 cellCenter = new Vector2(borderPosition.x + cellWidth / 2 + j * cellWidth + gridviewParameters.shift.x,
-				                                 borderPosition.y + cellHeight / 2 + i * cellHeight + gridviewParameters.shift.y);
+				Vector2 cellCenter = new Vector2(borderPosition.x + cellWidth / 2 + j * cellWidth,
+				                                 borderPosition.y + cellHeight / 2 + i * cellHeight);
 				
 				cellWidth -= (int)(borderSize.x * gridviewParameters.cellMargin);
 				cellHeight -= (int)(borderSize.y * gridviewParameters.cellMargin);
@@ -250,42 +251,11 @@ public class VectrosityGridview : MonoBehaviour
 				int cellPadding = (int)(cellWidth * gridviewParameters.cellPadding);
 				bool cellVisible = true;
 				cells[i, j] = new Cell(cellCenter, cellWidth, cellHeight, cellPadding);
-//				DrawCell(cells[i, j], index);
 				index++;
 			}
 		}
 
 		DrawCells(GetAllCells());
-		
-//		cells = new Cell[gridviewParameters.rows, gridviewParameters.columns];
-//
-//		Vector2 borderPosition = new Vector2(Screen.width * gridviewParameters.leftBorder, Screen.height * (1.0f - gridviewParameters.bottomBorder));
-//		Vector2 gridContentSize = new Vector2(Screen.width * (gridviewParameters.rightBorder - gridviewParameters.leftBorder), 
-//		                                 Screen.height * (gridviewParameters.bottomBorder - gridviewParameters.topBorder));
-//		int index = 0;
-//
-//		for (int i = 0; i < gridviewParameters.rows; i++)
-//		{
-//			for (int j = 0; j < gridviewParameters.columns; j++)
-//			{
-//				int cellWidth = (int)(borderSize.x / gridviewParameters.columns);
-//				int cellHeight = (int)(borderSize.y / gridviewParameters.rows);
-////				Vector2 cellCenter = new Vector2(borderPosition.x + cellWidth / 2 + j * cellWidth,
-////				                                 borderPosition.y + cellHeight / 2 + i * cellHeight);
-//				Vector2 cellCenter = new Vector2(borderPosition.x + cellWidth / 2 + j * cellWidth + gridviewParameters.shift.x,
-//				                                 borderPosition.y + cellHeight / 2 + i * cellHeight + gridviewParameters.shift.y);
-//
-//				cellWidth -= (int)(gridContentSize.x * gridviewParameters.cellMargin);
-//				cellHeight -= (int)(gridContentSize.y * gridviewParameters.cellMargin);
-//
-//				int cellPadding = (int)(cellWidth * gridviewParameters.cellPadding);
-//
-//				cells[i, j] = new Cell(cellCenter, cellWidth, cellHeight, cellPadding);
-//				index++;
-//			}
-//		}
-//
-//		DrawCells(GetAllCells());
 	}
 
 	bool HaveSomeChanges()
