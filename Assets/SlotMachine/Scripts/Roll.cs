@@ -1,11 +1,11 @@
-﻿using UnityEngine;
+using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
 
 [RequireComponent(typeof(UIPanel))]
 public class Roll : MonoBehaviour 
 {
-	[SerializeField] Cell[] cellPrefabs;
+	[SerializeField] CellMono[] cellPrefabs;
 	[SerializeField] UIGrid grid;
 
 	float _leftBorder = 0.0f;
@@ -14,13 +14,13 @@ public class Roll : MonoBehaviour
 	int _cellSize = 180;
 	
 	UIPanel panel;
-	List<Cell> cells;
+	List<CellMono> cells;
 	bool reposition = false;
 
 	void Awake()
 	{
 		panel = GetComponent<UIPanel>();
-		cells = new List<Cell>();
+		cells = new List<CellMono>();
 	}
 
 	public void SetBorders(float left, float right)
@@ -51,7 +51,7 @@ public class Roll : MonoBehaviour
 		for (int i = 0; i < _cellsCount; i++)
 		{
 			int randomCellNumber = Random.Range(0, cellPrefabs.Length);
-			Cell newCell = NGUITools.AddChild(grid.gameObject, cellPrefabs[randomCellNumber].gameObject).GetComponent<Cell>();
+			CellMono newCell = NGUITools.AddChild(grid.gameObject, cellPrefabs[randomCellNumber].gameObject).GetComponent<CellMono>();
 			newCell.gameObject.name = string.Format("{0}_{1}", cellPrefabs[randomCellNumber].gameObject.name, i);
 			newCell.SetSize(_cellSize);
 			cells.Add(newCell);
@@ -59,10 +59,10 @@ public class Roll : MonoBehaviour
 		grid.Reposition();
 	}
 
-	public List<Cell> GetVisibleCells()
+	public List<CellMono> GetVisibleCells()
 	{
-		List<Cell> visibleCells = new List<Cell>();
-		foreach (Cell cell in cells)
+		List<CellMono> visibleCells = new List<CellMono>();
+		foreach (CellMono cell in cells)
 		{
 			if (cell.visible)
 			{

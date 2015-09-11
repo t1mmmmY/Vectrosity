@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
 
@@ -16,9 +16,9 @@ public class SlotMachine : BaseSingleton<SlotMachine>
 		}
 	}
 
-	public Dictionary<int, List<Cell>> GetVisibleCells()
+	public Dictionary<int, List<CellMono>> GetVisibleCells()
 	{
-		Dictionary<int, List<Cell>> dictionaryCells = new Dictionary<int, List<Cell>>();
+		Dictionary<int, List<CellMono>> dictionaryCells = new Dictionary<int, List<CellMono>>();
 //		List<Cell> visibleCells = new List<Cell>();
 		for (int i = 0; i < rolls.Length; i++)
 		{

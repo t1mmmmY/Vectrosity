@@ -2,7 +2,7 @@
 using System.Collections;
 
 [RequireComponent(typeof(UI2DSprite))]
-public class Cell : MonoBehaviour 
+public class CellMono : MonoBehaviour 
 {
 	//May be changed
 	UI2DSprite sprite;

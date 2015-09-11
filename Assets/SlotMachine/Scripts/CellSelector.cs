@@ -4,9 +4,9 @@ using System.Collections.Generic;
 
 public class CellSelector : MonoBehaviour 
 {
-	[SerializeField] List<Cell> cells;
+	[SerializeField] List<CellMono> cells;
 
-	public static System.Action<List<Cell>> onSelectCells;
+	public static System.Action<List<CellMono>> onSelectCells;
 
 	void OnGUI()
 	{
@@ -21,10 +21,10 @@ public class CellSelector : MonoBehaviour
 	}
 
 
-	List<Cell> GetRandomCells()
+	List<CellMono> GetRandomCells()
 	{
-		Dictionary<int, List<Cell>> dictionaryCells = SlotMachine.Instance.GetVisibleCells();
-		List<Cell> randomCells = new List<Cell>();
+		Dictionary<int, List<CellMono>> dictionaryCells = SlotMachine.Instance.GetVisibleCells();
+		List<CellMono> randomCells = new List<CellMono>();
 
 		foreach (int key in dictionaryCells.Keys)
 		{
