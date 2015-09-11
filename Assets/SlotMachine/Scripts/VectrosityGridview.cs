@@ -31,7 +31,7 @@ public class GridviewParameters
 
 	public bool constraintToPanel = true;
 	public Vector2 shift = Vector2.zero;
-
+	public Vector2 screenSize = Vector2.zero;
 
 	public void Copy(GridviewParameters parameters)
 	{
@@ -47,6 +47,7 @@ public class GridviewParameters
 		columns = parameters.columns;
 		constraintToPanel = parameters.constraintToPanel;
 		shift = parameters.shift;
+		screenSize = parameters.screenSize;
 	}
 
 	public static bool operator ==(GridviewParameters a, GridviewParameters b)
@@ -62,7 +63,8 @@ public class GridviewParameters
 		    a.rows == b.rows &&
 		    a.columns == b.columns &&
 		    a.constraintToPanel == b.constraintToPanel &&
-		    a.shift == b.shift)
+		    a.shift == b.shift &&
+		    a.screenSize == b.screenSize)
 		{
 			return true;
 		}
@@ -124,7 +126,15 @@ public class VectrosityGridview : MonoBehaviour
 		//I need to check changes first
 		if (gridviewParameters.constraintToPanel)
 		{
-			gridviewParameters.shift = panel.transform.localPosition;
+			Vector2 shift = new Vector2(panel.finalClipRegion.x, panel.finalClipRegion.y);
+			gridviewParameters.shift = shift;
+			Vector2 screenSize = new Vector2(panel.finalClipRegion.z, panel.finalClipRegion.w);
+			gridviewParameters.screenSize = screenSize;
+		}
+		else
+		{
+			Vector2 screenSize = new Vector2(Screen.width, Screen.height);
+			gridviewParameters.screenSize = screenSize;
 		}
 
 		if (HaveSomeChanges())
@@ -149,6 +159,7 @@ public class VectrosityGridview : MonoBehaviour
 	void DrawGridview()
 	{
 		cells = new Cell[gridviewParameters.rows, gridviewParameters.columns];
+		Vector2 screenSize = gridviewParameters.screenSize;
 
 		if (line != null)
 		{
@@ -161,9 +172,10 @@ public class VectrosityGridview : MonoBehaviour
 		line = new VectorLine("Grid", new Vector2[gridviewParameters.rows * gridviewParameters.columns * 8], null, 3f, LineType.Discrete, Joins.Weld);	
 		paddingLine = new VectorLine("Grid", new Vector2[gridviewParameters.rows * gridviewParameters.columns * 8], null, 3f, LineType.Discrete, Joins.Weld);	
 		
-		Vector2 borderPosition = new Vector2(Screen.width * gridviewParameters.leftBorder, Screen.height * (1.0f - gridviewParameters.bottomBorder));
-		Vector2 borderSize = new Vector2(Screen.width * (gridviewParameters.rightBorder - gridviewParameters.leftBorder), 
-		                                 Screen.height * (gridviewParameters.bottomBorder - gridviewParameters.topBorder));
+		Vector2 borderPosition = new Vector2(gridviewParameters.shift.x + screenSize.x * gridviewParameters.leftBorder, 
+		                                     gridviewParameters.shift.y - screenSize.y * (1.0f - gridviewParameters.bottomBorder));
+		Vector2 borderSize = new Vector2(screenSize.x * (gridviewParameters.rightBorder - gridviewParameters.leftBorder), 
+		                                 screenSize.y * (gridviewParameters.bottomBorder - gridviewParameters.topBorder));
 		int index = 0;
 
 		for (int i = 0; i < gridviewParameters.rows; i++)
@@ -172,6 +184,8 @@ public class VectrosityGridview : MonoBehaviour
 			{
 				int cellWidth = (int)(borderSize.x / gridviewParameters.columns);
 				int cellHeight = (int)(borderSize.y / gridviewParameters.rows);
+//				Vector2 cellCenter = new Vector2(borderPosition.x + cellWidth / 2 + j * cellWidth,
+//				                                 borderPosition.y + cellHeight / 2 + i * cellHeight);
 				Vector2 cellCenter = new Vector2(borderPosition.x + cellWidth / 2 + j * cellWidth + gridviewParameters.shift.x,
 				                                 borderPosition.y + cellHeight / 2 + i * cellHeight + gridviewParameters.shift.y);
 
