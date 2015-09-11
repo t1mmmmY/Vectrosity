@@ -8,12 +8,11 @@ using Vectrosity;
 public class LineController : MonoBehaviour
 {
 	public int lineWidth = 5;
-	public int maxLineCount = 10;
+	public Color lineColor = Color.red;
 	public bool smoothLine = false;
 
-	Queue<VectorLine> lineQueue = new Queue<VectorLine>();
 	VectrosityGridview grid;
-	int count = 0;
+	VectorLine mainLine;
 
 	void Start ()
 	{
@@ -24,41 +23,37 @@ public class LineController : MonoBehaviour
 	{
 		if (GUILayout.Button("Get random cells"))
 		{
-			var randomCells = grid.GetRandomCells();
-			BuildLine(randomCells);
+			BuildLine(grid.GetRandomCells());
 		}
+		if (GUILayout.Button("Hide line"))
+		{
+			VectorLine.Destroy(ref mainLine);
+        }
 	}
 
 	void BuildLine(List<Cell> inputCells)
 	{
-		// We have reached max count, so delete first Line
-		if (lineQueue.Count == maxLineCount)
-		{
-			var firstLine = lineQueue.Dequeue();
-			VectorLine.Destroy(ref firstLine);
-		}
+		// Cleanup old Line
+		VectorLine.Destroy(ref mainLine);
 
-		var line = new VectorLine("Line " + count, new List<Vector2>(), null, lineWidth, LineType.Continuous, Joins.Weld);
-		line.color = new Color(Random.value, Random.value, Random.value);
+		// Create new Line
+		mainLine = new VectorLine("Line", new List<Vector2>(), null, lineWidth, LineType.Continuous, Joins.Weld);
+		mainLine.color = lineColor;
 
 		if (smoothLine)
 		{
-			line.Resize(100);
-			line.MakeSpline(inputCells.Select(i => i.Center).ToArray());
+			mainLine.Resize(100);
+			mainLine.MakeSpline(inputCells.Select(i => i.Center).ToArray());
 		}
 		else
 		{
 			// Draw all segments and connection lines
 			foreach(var cell in inputCells)
 			{
-				line.points2.Add(cell.Center);
+				mainLine.points2.Add(cell.Center);
 			}
 		}
 
-		//Update and draw Line
-		line.Draw();
-
-		// Push Line into queue
-		lineQueue.Enqueue(line);
+		mainLine.Draw();
 	}
 }
