@@ -110,10 +110,6 @@ public class VectrosityGridview : MonoBehaviour
 	UIPanel panel;
 	VectorLine debugCellLine;
 	VectorLine debugPaddingLine;
-	VectorLine line;
-
-	int lineWidth = 5;
-	Color lineColor = Color.blue;
 
 	Cell[,] cells;
 	
@@ -127,19 +123,7 @@ public class VectrosityGridview : MonoBehaviour
 		VectorLine.canvas.planeDistance = 0;
 		VectorLine.canvas.gameObject.layer = panel.gameObject.layer;
 
-		line = new VectorLine("MainLine", new List<Vector2>(), null, lineWidth, LineType.Discrete, Joins.Weld);
-		line.color = lineColor;
-
 		BuildGrid();
-	}
-
-	void OnGUI()
-	{
-		if (GUILayout.Button("Get random cells"))
-		{
-			var randomCells = GetRandomCells();
-			BuildLine(randomCells);
-		}
 	}
 
 	void FixedUpdate()
@@ -239,30 +223,8 @@ public class VectrosityGridview : MonoBehaviour
 		DrawCells(GetAllCells());
 	}
 
-	void BuildLine(List<Cell> inputCells)
-	{	
-		// Clear line points
-		line.Resize(0);
-		Cell prevCell = null;
-		
-		// Draw all segments and connection lines
-		foreach(var cell in inputCells)
-		{
-			if (prevCell != null)
-			{
-				line.points2.Add(prevCell.Center);
-				line.points2.Add(cell.Center);
-			}
-			prevCell = cell;
-		}
-
-		//Update and draw line
-		line.Draw();
-	}
-
 	bool HaveSomeChanges()
 	{
 		return oldGridviewParameters != gridviewParameters;
 	}
-
 }
