@@ -15,7 +15,7 @@ public class GridviewParameters
 	[Range(0.0f, 1.0f)]
 	public float bottomBorder = 0.9f;
 
-	[Range(0.0f, 1.0f)]
+	[Range(0.0f, 0.5f)]
 	public float cellPadding = 0.0f;
 
 	[Range(0.0f, 0.5f)]
