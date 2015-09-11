@@ -29,6 +29,9 @@ public class GridviewParameters
 	[Range(1, 10)]
 	public int columns = 4;
 
+	public bool constraintToPanel = true;
+	public Vector2 shift = Vector2.zero;
+
 
 	public void Copy(GridviewParameters parameters)
 	{
@@ -42,6 +45,8 @@ public class GridviewParameters
 		paddingCellColor = parameters.paddingCellColor;
 		rows = parameters.rows;
 		columns = parameters.columns;
+		constraintToPanel = parameters.constraintToPanel;
+		shift = parameters.shift;
 	}
 
 	public static bool operator ==(GridviewParameters a, GridviewParameters b)
@@ -55,7 +60,9 @@ public class GridviewParameters
 		    a.gridColor == b.gridColor &&
 		    a.paddingCellColor == b.paddingCellColor &&
 		    a.rows == b.rows &&
-		    a.columns == b.columns)
+		    a.columns == b.columns &&
+		    a.constraintToPanel == b.constraintToPanel &&
+		    a.shift == b.shift)
 		{
 			return true;
 		}
@@ -115,6 +122,10 @@ public class VectrosityGridview : MonoBehaviour
 	void FixedUpdate()
 	{
 		//I need to check changes first
+		if (gridviewParameters.constraintToPanel)
+		{
+			gridviewParameters.shift = panel.transform.localPosition;
+		}
 
 		if (HaveSomeChanges())
 		{
@@ -161,8 +172,8 @@ public class VectrosityGridview : MonoBehaviour
 			{
 				int cellWidth = (int)(borderSize.x / gridviewParameters.columns);
 				int cellHeight = (int)(borderSize.y / gridviewParameters.rows);
-				Vector2 cellCenter = new Vector2(borderPosition.x + cellWidth / 2 + j * cellWidth,
-				                                 borderPosition.y + cellHeight / 2 + i * cellHeight);
+				Vector2 cellCenter = new Vector2(borderPosition.x + cellWidth / 2 + j * cellWidth + gridviewParameters.shift.x,
+				                                 borderPosition.y + cellHeight / 2 + i * cellHeight + gridviewParameters.shift.y);
 
 				cellWidth -= (int)(borderSize.x * gridviewParameters.margin);
 				cellHeight -= (int)(borderSize.y * gridviewParameters.margin);
