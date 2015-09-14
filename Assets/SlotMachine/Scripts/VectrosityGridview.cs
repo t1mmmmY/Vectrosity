@@ -127,6 +127,21 @@ public class Cell
 	}
 }
 
+public class CombinationOfCells
+{
+	public List<Cell> cells;
+	public Color lineColor;
+	public float lineWidth;
+
+	public CombinationOfCells(List<Cell> cells, Color lineColor, float lineWidth)
+	{
+		this.cells = cells;
+		this.lineColor = lineColor;
+		this.lineWidth = lineWidth;
+	}
+}
+
+
 [RequireComponent(typeof(UIPanel))]
 public class VectrosityGridview : MonoBehaviour 
 {
@@ -195,6 +210,25 @@ public class VectrosityGridview : MonoBehaviour
 		}
 		
 		return result;
+	}
+
+
+	public List<CombinationOfCells> GetRandomCombinations()
+	{
+		List<CombinationOfCells> combinations = new List<CombinationOfCells>();
+
+		int countCombinations = Random.Range(1, 5);
+		for (int i = 0; i < countCombinations; i++)
+		{
+			List<Cell> randomCells = GetRandomCells();
+			Color lineColor = new Color(Random.Range(0.0f, 1.0f),
+			                        Random.Range(0.0f, 1.0f),
+			                        Random.Range(0.0f, 1.0f));
+			float lineWidth = Random.Range(1.0f, 10.0f);
+			combinations.Add(new CombinationOfCells(randomCells, lineColor, lineWidth));
+		}
+
+		return combinations;
 	}
 
 	/// <summary>
