@@ -71,9 +71,10 @@ public class CombinationsController : MonoBehaviour
 			                            Random.Range(0.0f, 1.0f));
 
 			float lineWidth = Random.Range(minWidth, maxWidth);
+			int order = i;
 
 			//Add combination to the list
-			combinations.Add(new CombinationOfCells(randomCells, lineColor, lineWidth));
+			combinations.Add(new CombinationOfCells(randomCells, lineColor, lineWidth, order));
 		}
 		
 		return combinations;

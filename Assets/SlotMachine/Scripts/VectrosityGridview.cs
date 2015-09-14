@@ -139,12 +139,14 @@ public class CombinationOfCells
 	public List<Cell> cells { get; private set; }
 	public Color lineColor { get; private set; }
 	public float lineWidth { get; private set; }
+	public int order { get; private set; }
 
-	public CombinationOfCells(List<Cell> cells, Color lineColor, float lineWidth)
+	public CombinationOfCells(List<Cell> cells, Color lineColor, float lineWidth, int order)
 	{
 		this.cells = cells;
 		this.lineColor = lineColor;
 		this.lineWidth = lineWidth;
+		this.order = order;
 	}
 }
 
