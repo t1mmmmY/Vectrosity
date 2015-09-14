@@ -20,6 +20,7 @@ public class GridviewParameters
 	
 	public Color gridColor;
 	public Color paddingCellColor;
+	public Color panelColor;
 	
 	[Range(1, 10)]
 	public int rows = 4;
@@ -28,7 +29,9 @@ public class GridviewParameters
 
 	public bool constraintToPanel = true;
 	public Vector2 shift = Vector2.zero;
+	public Vector2 panelPosition = Vector2.zero;
 	public Vector2 screenSize = Vector2.zero;
+	public bool isDebugPanel = true;
 	public bool isDebugGrid = false;
 
 	public void Copy(GridviewParameters parameters)
@@ -40,11 +43,14 @@ public class GridviewParameters
 		cellPadding = parameters.cellPadding;
 		gridColor = parameters.gridColor;
 		paddingCellColor = parameters.paddingCellColor;
+		panelColor = parameters.panelColor;
 		rows = parameters.rows;
 		columns = parameters.columns;
 		constraintToPanel = parameters.constraintToPanel;
 		shift = parameters.shift;
+		panelPosition = parameters.panelPosition;
 		screenSize = parameters.screenSize;
+		isDebugPanel = parameters.isDebugPanel;
 		isDebugGrid = parameters.isDebugGrid;
 	}
 
@@ -57,11 +63,14 @@ public class GridviewParameters
 		    a.cellPadding == b.cellPadding &&
 		    a.gridColor == b.gridColor &&
 		    a.paddingCellColor == b.paddingCellColor &&
+		    a.panelColor == b.panelColor &&
 		    a.rows == b.rows &&
 		    a.columns == b.columns &&
 		    a.constraintToPanel == b.constraintToPanel &&
 		    a.shift == b.shift &&
+		    a.panelPosition == b.panelPosition &&
 		    a.screenSize == b.screenSize &&
+		    a.isDebugPanel == b.isDebugPanel &&
 		    a.isDebugGrid == b.isDebugGrid)
 		{
 			return true;
@@ -75,6 +84,16 @@ public class GridviewParameters
 	public static bool operator !=(GridviewParameters a, GridviewParameters b)
 	{
 		return !(a == b);
+	}
+
+	public override bool Equals (object obj)
+	{
+		return this == (GridviewParameters)obj;
+	}
+
+	public override int GetHashCode ()
+	{
+		return base.GetHashCode ();
 	}
 }
 
@@ -108,10 +127,25 @@ public class Cell
 	}
 }
 
+public class CombinationOfCells
+{
+	public List<Cell> cells { get; private set; }
+	public Color lineColor { get; private set; }
+	public float lineWidth { get; private set; }
+
+	public CombinationOfCells(List<Cell> cells, Color lineColor, float lineWidth)
+	{
+		this.cells = cells;
+		this.lineColor = lineColor;
+		this.lineWidth = lineWidth;
+	}
+}
+
+
 [RequireComponent(typeof(UIPanel))]
 public class VectrosityGridview : MonoBehaviour 
 {
-	[SerializeField] UICamera camera;
+	[SerializeField] UICamera vectrosityCamera;
 
 	[SerializeField] GridviewParameters gridviewParameters;
 	GridviewParameters oldGridviewParameters;
@@ -119,6 +153,7 @@ public class VectrosityGridview : MonoBehaviour
 	UIPanel panel;
 	VectorLine debugCellLine;
 	VectorLine debugPaddingLine;
+	VectorLine debugPanelLine;
 
 	Cell[,] cells;
 	
@@ -128,7 +163,7 @@ public class VectrosityGridview : MonoBehaviour
 		oldGridviewParameters = new GridviewParameters();
 		oldGridviewParameters.Copy(gridviewParameters);
 
-		VectorLine.SetCanvasCamera(camera.cachedCamera);
+		VectorLine.SetCanvasCamera(vectrosityCamera.cachedCamera);
 		VectorLine.canvas.planeDistance = 0;
 		VectorLine.canvas.gameObject.layer = panel.gameObject.layer;
 
@@ -144,6 +179,8 @@ public class VectrosityGridview : MonoBehaviour
 			gridviewParameters.shift = shift;
 			Vector2 screenSize = new Vector2(panel.finalClipRegion.z, panel.finalClipRegion.w);
 			gridviewParameters.screenSize = screenSize;
+			Vector2 panelPosition = (Vector2)panel.transform.localPosition;
+			gridviewParameters.panelPosition = panelPosition;
 		}
 		else
 		{
@@ -158,28 +195,13 @@ public class VectrosityGridview : MonoBehaviour
 		}
 	}
 
-	/// <summary>
-	/// Get Random cells to build random debug lines
-	/// </summary>
-	/// <returns>The random cells.</returns>
-	public List<Cell> GetRandomCells()
-	{
-		List<Cell> result = new List<Cell>();
-		
-		for (int i = 0; i < gridviewParameters.columns; i++)
-		{
-			int randomIndex = Random.Range(0, gridviewParameters.rows);
-			result.Add(cells[randomIndex, i]);
-		}
-		
-		return result;
-	}
+
 
 	/// <summary>
 	/// Get list of all Cells in grid
 	/// </summary>
 	/// <returns>The all cells.</returns>
-	public List<Cell> GetAllCells()
+	private List<Cell> GetListOfCells()
 	{
 		List<Cell> result = new List<Cell>();
 		
@@ -195,6 +217,44 @@ public class VectrosityGridview : MonoBehaviour
 	}
 
 	/// <summary>
+	/// Gets all cells as two dimensional array.
+	/// </summary>
+	/// <returns>The all cells.</returns>
+	public Cell[,] GetAllCells()
+	{
+		return cells;
+
+//		List<Cell> result = new List<Cell>();
+//		
+//		for (int i = 0; i < gridviewParameters.rows; i++)
+//		{
+//			for (int j = 0; j < gridviewParameters.columns; j++)
+//			{
+//				result.Add(cells[i, j]);
+//			}
+//		}
+//		
+//		return result;
+	}
+
+	private void DrawPanel()
+	{
+		int pointCount = 8;
+
+		debugPanelLine = new VectorLine("DebugPanelLine", new Vector2[pointCount], null, 2, LineType.Discrete, Joins.Weld);
+		debugPanelLine.color = gridviewParameters.panelColor;
+
+		Vector2 size = new Vector2(panel.finalClipRegion.z, panel.finalClipRegion.w);
+		Vector2 position = new Vector2(panel.finalClipRegion.x + panel.transform.localPosition.x + Screen.width / 2f - size.x / 2f, 
+		                               panel.finalClipRegion.y + panel.transform.localPosition.y + Screen.height / 2f - size.y / 2f);
+		Rect rect = new Rect(position, size);
+
+		debugPanelLine.MakeRect(rect);
+
+		debugPanelLine.Draw();
+	}
+
+	/// <summary>
 	/// Draw cells for debugging purposes only
 	/// </summary>
 	/// <param name="cells">Cells.</param>
@@ -203,9 +263,9 @@ public class VectrosityGridview : MonoBehaviour
 		// Calculate point count for Discrete type of line that will contain Rects
 		int pointCount = cells.Count * 8;
 		// Clear all debug lines each time (no exception if null)
-		VectorLine.Destroy(ref debugCellLine);
-		VectorLine.Destroy(ref debugPaddingLine);
-
+//		VectorLine.Destroy(ref debugCellLine);
+//		VectorLine.Destroy(ref debugPaddingLine);
+		
 		// Build line with proper parameters
 		debugCellLine = new VectorLine("DebugCellLine", new Vector2[pointCount], null, 2, LineType.Discrete, Joins.Weld);
 		debugCellLine.color = gridviewParameters.gridColor;
@@ -231,12 +291,14 @@ public class VectrosityGridview : MonoBehaviour
 	/// </summary>
 	private void BuildGrid()
 	{
-		cells = new Cell[gridviewParameters.rows, gridviewParameters.columns];
-		Vector2 screenSize = gridviewParameters.screenSize;
-
 		// Due to documentation, there will be no exception if object is null
 		VectorLine.Destroy(ref debugCellLine);
 		VectorLine.Destroy(ref debugPaddingLine);
+		VectorLine.Destroy(ref debugPanelLine);
+
+		cells = new Cell[gridviewParameters.rows, gridviewParameters.columns];
+		Vector2 screenSize = gridviewParameters.screenSize;
+
 		// Setup lines to make them store and show information about cells
 		debugCellLine = new VectorLine("Grid", new Vector2[gridviewParameters.rows * gridviewParameters.columns * 8], null, 3f, LineType.Discrete, Joins.Weld);	
 		debugPaddingLine = new VectorLine("Grid", new Vector2[gridviewParameters.rows * gridviewParameters.columns * 8], null, 3f, LineType.Discrete, Joins.Weld);	
@@ -244,11 +306,13 @@ public class VectrosityGridview : MonoBehaviour
 		Vector2 borderSize = new Vector2(screenSize.x * (gridviewParameters.rightBorder - gridviewParameters.leftBorder), 
 		                                 screenSize.y * (gridviewParameters.bottomBorder - gridviewParameters.topBorder));
 		// Calculate real position of grid area
-		Vector2 borderPosition = new Vector2(Screen.width / 2f - borderSize.x / 2f + gridviewParameters.shift.x - screenSize.x * (1f - gridviewParameters.rightBorder) / 2f + screenSize.x * gridviewParameters.leftBorder / 2f,
-		                                     Screen.height / 2f - borderSize.y / 2f + gridviewParameters.shift.y + screenSize.y * (1f - gridviewParameters.bottomBorder) / 2f - screenSize.y * gridviewParameters.topBorder / 2f);
+		Vector2 borderPosition = new Vector2(Screen.width / 2f + gridviewParameters.panelPosition.x - borderSize.x / 2f + gridviewParameters.shift.x - screenSize.x * (1f - gridviewParameters.rightBorder) / 2f + screenSize.x * gridviewParameters.leftBorder / 2f,
+		                                     Screen.height / 2f + gridviewParameters.panelPosition.y - borderSize.y / 2f + gridviewParameters.shift.y + screenSize.y * (1f - gridviewParameters.bottomBorder) / 2f - screenSize.y * gridviewParameters.topBorder / 2f);
 		// Cell dimensions is just dividing correspond grid dimension on column/row count
 		Vector2 cellSize = new Vector2(borderSize.x / gridviewParameters.columns,
 		                               borderSize.y / gridviewParameters.rows);
+
+
 
 		// Calculate position of cells
 		int index = 0;
@@ -267,10 +331,18 @@ public class VectrosityGridview : MonoBehaviour
 			}
 		}
 
+
 		// Draw grid fod debug purposes only
 		if (gridviewParameters.isDebugGrid)
 		{
-			DrawCells(GetAllCells());
+			if (gridviewParameters.isDebugPanel)
+			{
+//				Rect panelRect = new Rect(borderPosition.x, borderPosition.y,
+//				                          borderSize.x, borderSize.y);
+				DrawPanel();
+			}
+
+			DrawCells(GetListOfCells());
 		}
 	}
 
