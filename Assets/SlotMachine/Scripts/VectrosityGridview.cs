@@ -194,6 +194,10 @@ public class VectrosityGridview : MonoBehaviour
 		return result;
 	}
 
+	/// <summary>
+	/// Draw cells for debugging purposes only
+	/// </summary>
+	/// <param name="cells">Cells.</param>
 	private void DrawCells(List<Cell> cells)
 	{
 		// Calculate point count for Discrete type of line that will contain Rects
