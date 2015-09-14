@@ -129,9 +129,9 @@ public class Cell
 
 public class CombinationOfCells
 {
-	public List<Cell> cells;
-	public Color lineColor;
-	public float lineWidth;
+	public List<Cell> cells { get; private set; }
+	public Color lineColor { get; private set; }
+	public float lineWidth { get; private set; }
 
 	public CombinationOfCells(List<Cell> cells, Color lineColor, float lineWidth)
 	{
@@ -195,47 +195,13 @@ public class VectrosityGridview : MonoBehaviour
 		}
 	}
 
-	/// <summary>
-	/// Get Random cells to build random debug lines
-	/// </summary>
-	/// <returns>The random cells.</returns>
-	public List<Cell> GetRandomCells()
-	{
-		List<Cell> result = new List<Cell>();
-		
-		for (int i = 0; i < gridviewParameters.columns; i++)
-		{
-			int randomIndex = Random.Range(0, gridviewParameters.rows);
-			result.Add(cells[randomIndex, i]);
-		}
-		
-		return result;
-	}
 
-
-	public List<CombinationOfCells> GetRandomCombinations()
-	{
-		List<CombinationOfCells> combinations = new List<CombinationOfCells>();
-
-		int countCombinations = Random.Range(1, 5);
-		for (int i = 0; i < countCombinations; i++)
-		{
-			List<Cell> randomCells = GetRandomCells();
-			Color lineColor = new Color(Random.Range(0.0f, 1.0f),
-			                        Random.Range(0.0f, 1.0f),
-			                        Random.Range(0.0f, 1.0f));
-			float lineWidth = Random.Range(1.0f, 10.0f);
-			combinations.Add(new CombinationOfCells(randomCells, lineColor, lineWidth));
-		}
-
-		return combinations;
-	}
 
 	/// <summary>
 	/// Get list of all Cells in grid
 	/// </summary>
 	/// <returns>The all cells.</returns>
-	public List<Cell> GetAllCells()
+	private List<Cell> GetListOfCells()
 	{
 		List<Cell> result = new List<Cell>();
 		
@@ -250,6 +216,26 @@ public class VectrosityGridview : MonoBehaviour
 		return result;
 	}
 
+	/// <summary>
+	/// Gets all cells as two dimensional array.
+	/// </summary>
+	/// <returns>The all cells.</returns>
+	public Cell[,] GetAllCells()
+	{
+		return cells;
+
+//		List<Cell> result = new List<Cell>();
+//		
+//		for (int i = 0; i < gridviewParameters.rows; i++)
+//		{
+//			for (int j = 0; j < gridviewParameters.columns; j++)
+//			{
+//				result.Add(cells[i, j]);
+//			}
+//		}
+//		
+//		return result;
+	}
 
 	private void DrawPanel()
 	{
@@ -356,7 +342,7 @@ public class VectrosityGridview : MonoBehaviour
 				DrawPanel();
 			}
 
-			DrawCells(GetAllCells());
+			DrawCells(GetListOfCells());
 		}
 	}
 

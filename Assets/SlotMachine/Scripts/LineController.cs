@@ -62,42 +62,61 @@ public class Line : IDisposable
 	#endregion
 }
 
-[RequireComponent(typeof(VectrosityGridview))]
+[RequireComponent(typeof(CombinationsController))]
 public class LineController : MonoBehaviour
 {
-	public int lineWidth = 5;
-	public Color lineColor = Color.red;
+//	public int lineWidth = 5;
+//	public Color lineColor = Color.red;
 
-	Line mainLine;
-	VectrosityGridview grid;
+	List<Line> mainLines;
+	CombinationsController combinator;
 
 	void Start ()
 	{
-		grid = GetComponent<VectrosityGridview>();
+		combinator = GetComponent<CombinationsController>();
 	}
 
 	void OnGUI()
 	{
 		if (GUILayout.Button("Get random cells"))
 		{
-			BuildLine(grid.GetRandomCells());
+			BuildCombinations(combinator.GetRandomCombinations());
+//			BuildLine(grid.GetRandomCells(), lineWidth, lineColor);
 		}
 		if (GUILayout.Button("Hide line"))
 		{
-			if (mainLine != null)
-			{
-				mainLine.Dispose();
-			}
+			DisposeLines();
         }
 	}
 
-	void BuildLine(List<Cell> inputCells)
+	void BuildCombinations(List<CombinationOfCells> combinations)
 	{
-		if (mainLine != null)
+		DisposeLines();
+		mainLines = new List<Line>();
+		
+		foreach (CombinationOfCells combination in combinations)
 		{
-			mainLine.Dispose();
+			Line line = BuildLine(combination.cells, combination.lineWidth, combination.lineColor);
+			mainLines.Add(line);
 		}
-		mainLine = new Line(lineWidth, lineColor, inputCells);
-		mainLine.DrawLine();
+	}
+
+	Line BuildLine(List<Cell> inputCells, float width, Color color)
+	{
+		Line line = new Line(width, color, inputCells);
+		line.DrawLine();
+
+		return line;
+	}
+
+	void DisposeLines()
+	{
+		if (mainLines != null)
+		{
+			foreach (Line line in mainLines)
+			{
+				line.Dispose();
+			}
+		}
 	}
 }
