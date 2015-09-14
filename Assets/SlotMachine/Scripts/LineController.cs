@@ -65,9 +65,6 @@ public class Line : IDisposable
 [RequireComponent(typeof(CombinationsController))]
 public class LineController : MonoBehaviour
 {
-//	public int lineWidth = 5;
-//	public Color lineColor = Color.red;
-
 	List<Line> mainLines;
 	CombinationsController combinator;
 
@@ -81,7 +78,6 @@ public class LineController : MonoBehaviour
 		if (GUILayout.Button("Get random cells"))
 		{
 			BuildCombinations(combinator.GetRandomCombinations());
-//			BuildLine(grid.GetRandomCells(), lineWidth, lineColor);
 		}
 		if (GUILayout.Button("Hide line"))
 		{

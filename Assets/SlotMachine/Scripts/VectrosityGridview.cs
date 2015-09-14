@@ -31,7 +31,6 @@ public class GridviewParameters
 	public Vector2 shift = Vector2.zero;
 	public Vector2 panelPosition = Vector2.zero;
 	public Vector2 screenSize = Vector2.zero;
-	public bool isDebugPanel = true;
 	public bool isDebugGrid = false;
 
 	public void Copy(GridviewParameters parameters)
@@ -50,7 +49,6 @@ public class GridviewParameters
 		shift = parameters.shift;
 		panelPosition = parameters.panelPosition;
 		screenSize = parameters.screenSize;
-		isDebugPanel = parameters.isDebugPanel;
 		isDebugGrid = parameters.isDebugGrid;
 	}
 
@@ -70,7 +68,6 @@ public class GridviewParameters
 		    a.shift == b.shift &&
 		    a.panelPosition == b.panelPosition &&
 		    a.screenSize == b.screenSize &&
-		    a.isDebugPanel == b.isDebugPanel &&
 		    a.isDebugGrid == b.isDebugGrid)
 		{
 			return true;
@@ -97,7 +94,7 @@ public class GridviewParameters
 	}
 }
 
-public class Cell 
+public class Cell : System.ICloneable
 {
 	public float Width { get; private set; }
 	public float Height { get; private set; }
@@ -116,6 +113,11 @@ public class Cell
 		Vector2 position = Center - new Vector2(Width / 2f - Padding, Height / 2f - Padding);
 		return new Rect(position, new Vector2(Width - Padding * 2f, Height - Padding * 2f));
 	}
+
+	public void SetVisible(bool visible)
+	{
+		Visible = visible;
+	}
 	
 	public Cell(Vector2 center, float width, float height, float padding, bool visible)
 	{
@@ -124,6 +126,11 @@ public class Cell
 		this.Height = height;
 		this.Padding = padding;
 		this.Visible = visible;
+	}
+
+	public object Clone ()
+	{
+		return this.MemberwiseClone();
 	}
 }
 
@@ -196,7 +203,6 @@ public class VectrosityGridview : MonoBehaviour
 	}
 
 
-
 	/// <summary>
 	/// Get list of all Cells in grid
 	/// </summary>
@@ -223,34 +229,26 @@ public class VectrosityGridview : MonoBehaviour
 	public Cell[,] GetAllCells()
 	{
 		return cells;
-
-//		List<Cell> result = new List<Cell>();
-//		
-//		for (int i = 0; i < gridviewParameters.rows; i++)
-//		{
-//			for (int j = 0; j < gridviewParameters.columns; j++)
-//			{
-//				result.Add(cells[i, j]);
-//			}
-//		}
-//		
-//		return result;
 	}
 
 	private void DrawPanel()
 	{
 		int pointCount = 8;
 
+		// Build debug panel line with proper parameters
 		debugPanelLine = new VectorLine("DebugPanelLine", new Vector2[pointCount], null, 2, LineType.Discrete, Joins.Weld);
 		debugPanelLine.color = gridviewParameters.panelColor;
 
+		//Get panel size
 		Vector2 size = new Vector2(panel.finalClipRegion.z, panel.finalClipRegion.w);
+
+		//Get panel position
 		Vector2 position = new Vector2(panel.finalClipRegion.x + panel.transform.localPosition.x + Screen.width / 2f - size.x / 2f, 
 		                               panel.finalClipRegion.y + panel.transform.localPosition.y + Screen.height / 2f - size.y / 2f);
+
+		//Draw panel rect
 		Rect rect = new Rect(position, size);
-
 		debugPanelLine.MakeRect(rect);
-
 		debugPanelLine.Draw();
 	}
 
@@ -263,8 +261,8 @@ public class VectrosityGridview : MonoBehaviour
 		// Calculate point count for Discrete type of line that will contain Rects
 		int pointCount = cells.Count * 8;
 		// Clear all debug lines each time (no exception if null)
-//		VectorLine.Destroy(ref debugCellLine);
-//		VectorLine.Destroy(ref debugPaddingLine);
+		VectorLine.Destroy(ref debugCellLine);
+		VectorLine.Destroy(ref debugPaddingLine);
 		
 		// Build line with proper parameters
 		debugCellLine = new VectorLine("DebugCellLine", new Vector2[pointCount], null, 2, LineType.Discrete, Joins.Weld);
@@ -295,7 +293,7 @@ public class VectrosityGridview : MonoBehaviour
 		VectorLine.Destroy(ref debugCellLine);
 		VectorLine.Destroy(ref debugPaddingLine);
 		VectorLine.Destroy(ref debugPanelLine);
-
+		
 		cells = new Cell[gridviewParameters.rows, gridviewParameters.columns];
 		Vector2 screenSize = gridviewParameters.screenSize;
 
@@ -331,17 +329,11 @@ public class VectrosityGridview : MonoBehaviour
 			}
 		}
 
-
+		
 		// Draw grid fod debug purposes only
 		if (gridviewParameters.isDebugGrid)
 		{
-			if (gridviewParameters.isDebugPanel)
-			{
-//				Rect panelRect = new Rect(borderPosition.x, borderPosition.y,
-//				                          borderSize.x, borderSize.y);
-				DrawPanel();
-			}
-
+			DrawPanel();
 			DrawCells(GetListOfCells());
 		}
 	}
