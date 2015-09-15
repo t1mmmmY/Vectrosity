@@ -41,7 +41,7 @@ public class CombinationsController : MonoBehaviour
 			Cell randomCell = allCells[randomIndex, i].Clone() as Cell;
 
 			//Set cell visibility
-			bool isVisible = Random.Range(0.0f, 1.0f) <= cellsVisibility;
+			bool isVisible = GetVisibility();
 			randomCell.SetVisible(isVisible);
 
 			result.Add(randomCell);
@@ -78,5 +78,31 @@ public class CombinationsController : MonoBehaviour
 		}
 		
 		return randomLines;
+	}
+
+	public List<Line> SetCellsVisibility(List<Line> lines)
+	{
+		List<Line> newLines = new List<Line>();
+
+		foreach (Line line in lines)
+		{
+			Line newLine = line.Clone() as Line;
+			newLine.Cells = new Cell[line.Cells.Length];
+
+			for (int i = 0; i < line.Cells.Length; i++)
+			{
+				newLine.Cells[i] = line.Cells[i].Clone() as Cell;
+				newLine.Cells[i].SetVisible(GetVisibility());
+			}
+
+			newLines.Add(newLine);
+		}
+
+		return newLines;
+	}
+
+	private bool GetVisibility()
+	{
+		return Random.Range(0.0f, 1.0f) <= cellsVisibility;
 	}
 }

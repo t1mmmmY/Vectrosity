@@ -118,7 +118,7 @@ public static class CellExtention
 	}
 }
 
-public class Line : IDisposable
+public class Line : IDisposable, ICloneable
 {
 	public float LineWidth { get; set; }
 	public Color LineColor { get; set; }
@@ -160,6 +160,7 @@ public class Line : IDisposable
 		// Create new Line
 		_line = new VectorLine("Line", new List<Vector2>(), null, LineWidth, LineType.Discrete, Joins.Weld);
 		_line.color = LineColor;
+		_line.drawDepth = LineOrder;
 
 		Vector2 lastPoint = Vector2.zero;
 		// Draw all segments and connection lines
@@ -264,6 +265,13 @@ public class Line : IDisposable
 		Array.Clear(Cells, 0, Cells.Length);
 	}
 	#endregion
+
+	#region ICloneable implementation
+	public object Clone ()
+	{
+		return this.MemberwiseClone();
+	}
+	#endregion
 }
 
 [RequireComponent(typeof(CombinationsController))]
@@ -283,6 +291,10 @@ public class LineController : MonoBehaviour
 		{
 			BuildLines(combinator.GetRandomLines());
 		}
+		if (GUILayout.Button("Change cells visibility"))
+		{
+			SetCellsVisibility();
+		}
 		if (GUILayout.Button("Hide line"))
 		{
 			DisposeLines();
@@ -301,6 +313,15 @@ public class LineController : MonoBehaviour
 		}
 	}
 
+	void SetCellsVisibility()
+	{
+		if (mainLines != null)
+		{
+			List<Line> lines = combinator.SetCellsVisibility(mainLines);
+			BuildLines(lines);
+		}
+	}
+
 	void DisposeLines()
 	{
 		if (mainLines != null)
@@ -309,6 +330,7 @@ public class LineController : MonoBehaviour
 			{
 				line.Dispose();
 			}
+			mainLines = new List<Line>();
 		}
 	}
 }

@@ -128,10 +128,12 @@ public class Cell : System.ICloneable
 		this.Visible = visible;
 	}
 
+	#region ICloneable implementation
 	public object Clone ()
 	{
 		return this.MemberwiseClone();
 	}
+	#endregion
 }
 
 
