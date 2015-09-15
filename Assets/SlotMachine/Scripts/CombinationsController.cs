@@ -51,17 +51,17 @@ public class CombinationsController : MonoBehaviour
 	}
 	
 	/// <summary>
-	/// Gets the random combinations.
+	/// Gets the random lines.
 	/// </summary>
 	/// <returns>The random combinations.</returns>
-	public List<CombinationOfCells> GetRandomCombinations()
+	public List<Line> GetRandomLines()
 	{
-		List<CombinationOfCells> combinations = new List<CombinationOfCells>();
+		List<Line> randomLines = new List<Line>();
 
-		int countCombinations = Random.Range(minCombinations, maxCombinations);
+		int countLines = Random.Range(minCombinations, maxCombinations);
 
 		//Create combinations
-		for (int i = 0; i < countCombinations; i++)
+		for (int i = 0; i < countLines; i++)
 		{
 			List<Cell> randomCells = GetRandomCells();
 
@@ -74,9 +74,9 @@ public class CombinationsController : MonoBehaviour
 			int order = i;
 
 			//Add combination to the list
-			combinations.Add(new CombinationOfCells(randomCells, lineColor, lineWidth, order));
+			randomLines.Add(new Line(lineWidth, lineColor, order, randomCells));
 		}
 		
-		return combinations;
+		return randomLines;
 	}
 }

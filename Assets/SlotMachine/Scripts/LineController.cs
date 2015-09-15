@@ -122,15 +122,17 @@ public class Line : IDisposable
 {
 	public float LineWidth { get; set; }
 	public Color LineColor { get; set; }
+	public int LineOrder { get; set; }
 	public Cell[] Cells { get; set; }
 	public bool IsEnabled { get; private set; }
 
 	private VectorLine _line;
 
-	public Line(float lineWidth, Color lineColor, List<Cell> cells)
+	public Line(float lineWidth, Color lineColor, int lineOrder, List<Cell> cells)
 	{
 		this.LineWidth = lineWidth;
 		this.LineColor = lineColor;
+		this.LineOrder = lineOrder;
 		this.Cells = cells.ToArray();
 		this.IsEnabled = false;
 	}
@@ -231,7 +233,7 @@ public class LineController : MonoBehaviour
 	{
 		if (GUILayout.Button("Get random cells"))
 		{
-			BuildCombinations(combinator.GetRandomCombinations());
+			BuildLines(combinator.GetRandomLines());
 		}
 		if (GUILayout.Button("Hide line"))
 		{
@@ -239,24 +241,16 @@ public class LineController : MonoBehaviour
         }
 	}
 
-	void BuildCombinations(List<CombinationOfCells> combinations)
+	void BuildLines(List<Line> lines)
 	{
 		DisposeLines();
 		mainLines = new List<Line>();
 		
-		foreach (CombinationOfCells combination in combinations)
+		foreach (Line line in lines)
 		{
-			Line line = BuildLine(combination.cells, combination.lineWidth, combination.lineColor);
+			line.DrawLine();
 			mainLines.Add(line);
 		}
-	}
-
-	Line BuildLine(List<Cell> inputCells, float width, Color color)
-	{
-		Line line = new Line(width, color, inputCells);
-		line.DrawLine();
-
-		return line;
 	}
 
 	void DisposeLines()
