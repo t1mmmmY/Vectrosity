@@ -137,6 +137,19 @@ public class Line : IDisposable
 		this.IsEnabled = false;
 	}
 
+	public Vector2 GetStumbVector(SideType side)
+	{
+		switch (side)
+		{
+		case SideType.Top: return new Vector2(0f, -1f);
+		case SideType.Bottom: return new Vector2(0f, 1f);
+		case SideType.Left: return new Vector2(1f, 0f);
+		case SideType.Right: return new Vector2(-1f, 0f);
+		default:
+			throw new System.NotImplementedException();
+		}
+	}
+
 	public void DrawLine()
 	{
 		IsEnabled = true;
@@ -145,7 +158,7 @@ public class Line : IDisposable
 		VectorLine.Destroy(ref _line);
 		
 		// Create new Line
-		_line = new VectorLine("Line", new List<Vector2>(), null, LineWidth, LineType.Continuous, Joins.Weld);
+		_line = new VectorLine("Line", new List<Vector2>(), null, LineWidth, LineType.Discrete, Joins.Weld);
 		_line.color = LineColor;
 
 		Vector2 lastPoint = Vector2.zero;
@@ -153,23 +166,42 @@ public class Line : IDisposable
 		for(var i = 0; i < Cells.Length; i++)
         {
 			var cell = Cells[i];
-			// Phaze 0
+			// Part 0
 			// Add Line's Head
 			if (i == 0)
 			{
 				// Add Line head - Left middle point
 				lastPoint = new Vector2(cell.GetRectPoints().xMin, cell.Center.y);
-				_line.points2.Add(lastPoint);
 			}
 
-			// Phaze 1
+			// Part 1
+			_line.points2.Add(lastPoint);
 			MathLine line = new MathLine().CalculateLineByPoints(lastPoint, cell.Center);
 			SideType side = SideType.None;
 			cell.GetExternalIntersectionPoint(line, cell.Center, lastPoint - cell.Center, out side, out lastPoint);
-			_line.points2.Add(lastPoint);
+			if (cell.Visible)
+			{
+				_line.points2.Add(lastPoint);
+			}
+			else
+			{
+				// Prepare line for Stumb
+				_line.points2.Add(lastPoint - LineWidth / 4f * GetStumbVector(side));
+			}
 
 			// Phaze 2
-			_line.points2.Add(cell.Center);
+			if (cell.Visible)
+			{
+				// Draw line through cell center
+				_line.points2.Add(lastPoint);
+				_line.points2.Add(cell.Center);
+			}
+			else
+			{
+				// Draw Stumb to have nice line ending
+				_line.points2.Add(lastPoint - LineWidth / 4f * GetStumbVector(side));
+				_line.points2.Add(lastPoint);
+			}
 
 			// Phaze 3
 			Vector2 nextPoint;
@@ -186,12 +218,28 @@ public class Line : IDisposable
 			}
 			line = new MathLine().CalculateLineByPoints(cell.Center, nextPoint);
 			cell.GetInternalIntersectionPoint(line, cell.Center, nextPoint - cell.Center, out side, out lastPoint);
-			_line.points2.Add(lastPoint); 
+
+			if (cell.Visible)
+            {
+				// Start line from Cell's center
+				_line.points2.Add(cell.Center);
+				_line.points2.Add(lastPoint); 
+			}
+			else
+			{
+				// Start line with keeping Stumb in mind
+				_line.points2.Add(lastPoint);
+				_line.points2.Add(lastPoint - LineWidth / 4f * GetStumbVector(side));
+
+				// Next line should be started from this "stumb" point
+				lastPoint -= LineWidth / 4f * GetStumbVector(side);
+			}
 
 			// Phaze 4
 			// Add Line tail
 			if (i == Cells.Length - 1)
 			{
+				_line.points2.Add(lastPoint);
 				_line.points2.Add(nextPoint);
 			}
         }
