@@ -58,15 +58,15 @@ public class MathLine
 
 public static class CellExtention
 {
-	public static Dictionary<SideType, MathLine> GetCellSides(this Cell cell)
+	public static Dictionary<SideType, MathLine> GetCellSides(this Cell cell, float offset = 0f)
 	{
 		Dictionary<SideType, MathLine> result = new Dictionary<SideType, MathLine>();
 		//Go through each side
 		Rect paddingRect = cell.GetPaddinRectPosition();
-		Vector2 LeftTopPoint = new Vector2(paddingRect.xMin, paddingRect.yMax);
-		Vector2 RightTopPoint = new Vector2(paddingRect.xMax, paddingRect.yMax);
-		Vector2 RightBottomPoint = new Vector2(paddingRect.xMax, paddingRect.yMin);
-		Vector2 LeftBottomPoint = new Vector2(paddingRect.xMin, paddingRect.yMin);
+		Vector2 LeftTopPoint = new Vector2(paddingRect.xMin - offset, paddingRect.yMax + offset);
+		Vector2 RightTopPoint = new Vector2(paddingRect.xMax + offset, paddingRect.yMax + offset);
+		Vector2 RightBottomPoint = new Vector2(paddingRect.xMax + offset, paddingRect.yMin - offset);
+		Vector2 LeftBottomPoint = new Vector2(paddingRect.xMin - offset, paddingRect.yMin - offset);
 
 		result[SideType.Top] = new MathLine().CalculateLineByPoints(LeftTopPoint, RightTopPoint);
 		result[SideType.Right] = new MathLine().CalculateLineByPoints(RightTopPoint, RightBottomPoint);
@@ -99,20 +99,20 @@ public static class CellExtention
 				intersectionPoint = point;
 			}
 		}
-	} 
+	}
 
-	public static void GetExternalIntersectionPoint(this Cell cell, MathLine inputLine, Vector2 center, Vector2 direction, out SideType intersectionSide, out Vector2 intersectionPoint)
+	public static void GetExternalIntersectionPoint(this Cell cell, MathLine inputLine, Vector2 center, Vector2 direction, float offset, out SideType intersectionSide, out Vector2 intersectionPoint)
 	{
 		// Exclude Right side from calculations
-		var sides = cell.GetCellSides().Where(i => i.Key != SideType.Right);
+		var sides = cell.GetCellSides(offset).Where(i => i.Key != SideType.Right);
 		// Get best intersection data
 		GetIntersectionPoint(center, direction, sides, inputLine, out intersectionSide, out intersectionPoint);
 	}
 
-	public static void GetInternalIntersectionPoint(this Cell cell, MathLine inputLine, Vector2 center, Vector2 direction, out SideType intersectionSide, out Vector2 intersectionPoint)
+	public static void GetInternalIntersectionPoint(this Cell cell, MathLine inputLine, Vector2 center, Vector2 direction, float offset, out SideType intersectionSide, out Vector2 intersectionPoint)
 	{
 		// Exclude Left side from calculations
-		var sides = cell.GetCellSides().Where(i => i.Key != SideType.Left);
+		var sides = cell.GetCellSides(offset).Where(i => i.Key != SideType.Left);
 		// Get best intersection data
 		GetIntersectionPoint(center, direction, sides, inputLine, out intersectionSide, out intersectionPoint);
 	}
@@ -179,18 +179,19 @@ public class Line : IDisposable, ICloneable
 			_line.points2.Add(lastPoint);
 			MathLine line = new MathLine().CalculateLineByPoints(lastPoint, cell.Center);
 			SideType side = SideType.None;
-			cell.GetExternalIntersectionPoint(line, cell.Center, lastPoint - cell.Center, out side, out lastPoint);
+
 			if (cell.Visible)
 			{
-				_line.points2.Add(lastPoint);
+				cell.GetExternalIntersectionPoint(line, cell.Center, lastPoint - cell.Center, 0f, out side, out lastPoint);
 			}
 			else
 			{
 				// Prepare line for Stumb
-				_line.points2.Add(lastPoint - LineWidth / 4f * GetStumbVector(side));
+				cell.GetExternalIntersectionPoint(line, cell.Center, lastPoint - cell.Center, LineWidth / 3f, out side, out lastPoint);
 			}
+			_line.points2.Add(lastPoint);
 
-			// Phaze 2
+			// Part 2
 			if (cell.Visible)
 			{
 				// Draw line through cell center
@@ -200,11 +201,11 @@ public class Line : IDisposable, ICloneable
 			else
 			{
 				// Draw Stumb to have nice line ending
-				_line.points2.Add(lastPoint - LineWidth / 4f * GetStumbVector(side));
 				_line.points2.Add(lastPoint);
+				_line.points2.Add(lastPoint + LineWidth / 4f * GetStumbVector(side));
 			}
 
-			// Phaze 3
+			// Part 3
 			Vector2 nextPoint;
 			// If current point is the last one, take Right Cell's point
 			if (i == Cells.Length - 1)
@@ -218,25 +219,23 @@ public class Line : IDisposable, ICloneable
 				nextPoint = nextCell.Center;
 			}
 			line = new MathLine().CalculateLineByPoints(cell.Center, nextPoint);
-			cell.GetInternalIntersectionPoint(line, cell.Center, nextPoint - cell.Center, out side, out lastPoint);
 
 			if (cell.Visible)
             {
+				cell.GetInternalIntersectionPoint(line, cell.Center, nextPoint - cell.Center, 0f, out side, out lastPoint);
 				// Start line from Cell's center
 				_line.points2.Add(cell.Center);
 				_line.points2.Add(lastPoint); 
 			}
 			else
 			{
+				cell.GetInternalIntersectionPoint(line, cell.Center, nextPoint - cell.Center, LineWidth / 3f, out side, out lastPoint);
 				// Start line with keeping Stumb in mind
+				_line.points2.Add(lastPoint + LineWidth / 4f * GetStumbVector(side));
 				_line.points2.Add(lastPoint);
-				_line.points2.Add(lastPoint - LineWidth / 4f * GetStumbVector(side));
-
-				// Next line should be started from this "stumb" point
-				lastPoint -= LineWidth / 4f * GetStumbVector(side);
 			}
 
-			// Phaze 4
+			// Part 4
 			// Add Line tail
 			if (i == Cells.Length - 1)
 			{
