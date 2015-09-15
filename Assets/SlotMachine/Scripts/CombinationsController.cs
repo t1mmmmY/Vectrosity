@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 
 [RequireComponent(typeof(VectrosityGridview))]
 public class CombinationsController : MonoBehaviour 
@@ -43,7 +44,7 @@ public class CombinationsController : MonoBehaviour
 			//Set cell visibility
 			bool isVisible = GetVisibility();
 			randomCell.SetVisible(isVisible);
-
+			
 			result.Add(randomCell);
 		}
 		
@@ -71,10 +72,45 @@ public class CombinationsController : MonoBehaviour
 			                            Random.Range(0.0f, 1.0f));
 
 			float lineWidth = Random.Range(minWidth, maxWidth);
-			int order = i;
+			int lineOrder = i;
+
+			Vector2? startPoint = null;
+			Vector2? endPoint = null;
+
+			// Example on how set custom line start
+			if ( Random.value <= 0.5f)
+			{
+				Cell firstCell = randomCells.FirstOrDefault();
+				Rect firstRect = firstCell.GetRectPoints();
+
+				if (firstCell.IndexX == 0)
+				{
+					startPoint = new Vector2(firstRect.xMin, firstRect.yMin);
+				}
+				if (firstCell.IndexX == gridview.RowCount - 1)
+				{
+					startPoint = new Vector2(firstRect.xMin, firstRect.yMax);
+				}
+			}
+
+			// Example on how set custom line end
+			if ( Random.value <= 0.5f)
+			{
+				Cell lastCell = randomCells.LastOrDefault();
+				Rect lastRect = lastCell.GetRectPoints();
+
+				if (lastCell.IndexX == 0)
+				{
+					endPoint = new Vector2(lastRect.xMax, lastRect.yMin);
+				}
+				if (lastCell.IndexX == gridview.RowCount - 1)
+				{
+					endPoint = new Vector2(lastRect.xMax, lastRect.yMax);
+				}
+			}
 
 			//Add combination to the list
-			randomLines.Add(new Line(lineWidth, lineColor, order, randomCells));
+			randomLines.Add(new Line(lineWidth, lineColor, lineOrder, randomCells, startPoint, endPoint));
 		}
 		
 		return randomLines;

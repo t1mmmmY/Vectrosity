@@ -101,6 +101,8 @@ public class Cell : System.ICloneable
 	public Vector2 Center { get; private set; }
 	public float Padding { get; private set; }
 	public bool Visible { get; private set; }
+	public int IndexX { get; private set; }
+	public int IndexY { get; private set; }
 
 	public Rect GetRectPoints()
 	{
@@ -119,13 +121,15 @@ public class Cell : System.ICloneable
 		Visible = visible;
 	}
 	
-	public Cell(Vector2 center, float width, float height, float padding, bool visible)
+	public Cell(Vector2 center, float width, float height, float padding, bool visible, int indexX, int indexY)
 	{
 		this.Center = center;
 		this.Width = width;
 		this.Height = height;
 		this.Padding = padding;
 		this.Visible = visible;
+		this.IndexX = indexX;
+		this.IndexY = indexY;
 	}
 
 	#region ICloneable implementation
@@ -152,6 +156,36 @@ public class VectrosityGridview : MonoBehaviour
 	VectorLine debugPanelLine;
 
 	Cell[,] cells;
+
+	public int RowCount 
+	{
+		get
+		{
+			if (cells != null)
+			{
+				return cells.GetLength(0);
+			}
+			else
+			{
+				return -1;
+			}
+		}
+	}
+
+	public int ColumnCount
+	{
+		get
+		{
+			if (cells != null)
+			{
+				return cells.GetLength(1);
+			}
+			else
+			{
+				return -1;
+			}
+		}
+	}
 	
 	void Start ()
 	{
@@ -299,8 +333,6 @@ public class VectrosityGridview : MonoBehaviour
 		Vector2 cellSize = new Vector2(borderSize.x / gridviewParameters.columns,
 		                               borderSize.y / gridviewParameters.rows);
 
-
-
 		// Calculate position of cells
 		int index = 0;
 		for (int i = 0; i < gridviewParameters.rows; i++)
@@ -313,7 +345,7 @@ public class VectrosityGridview : MonoBehaviour
 				// Internal area size is controlled by padding parameter
 				int cellPadding = (int)(cellSize.x * gridviewParameters.cellPadding);
 				// Create cell and setup its parameters
-				cells[i, j] = new Cell(cellCenter, cellSize.x, cellSize.y, cellPadding, true);
+				cells[i, j] = new Cell(cellCenter, cellSize.x, cellSize.y, cellPadding, true, i, j);
 				index++;
 			}
 		}

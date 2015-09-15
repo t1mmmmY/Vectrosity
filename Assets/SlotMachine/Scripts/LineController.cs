@@ -124,30 +124,29 @@ public class Line : IDisposable, ICloneable
 	public Color LineColor { get; set; }
 	public int LineOrder { get; set; }
 	public Cell[] Cells { get; set; }
+	public bool IsDiagonal { get; set; }
 	public bool IsEnabled { get; private set; }
 
 	private VectorLine _line;
+	private Vector2? _startPoint;
+	private Vector2? _endPoint;
 
-	public Line(float lineWidth, Color lineColor, int lineOrder, List<Cell> cells)
+	public Line(float lineWidth, 
+	            Color lineColor, 
+	            int lineOrder,
+	            List<Cell> cells,
+	            Vector2? startPoint = null,
+	            Vector2? endPoint = null)
 	{
 		this.LineWidth = lineWidth;
 		this.LineColor = lineColor;
 		this.LineOrder = lineOrder;
 		this.Cells = cells.ToArray();
 		this.IsEnabled = false;
-	}
 
-	public Vector2 GetStumbVector(SideType side)
-	{
-		switch (side)
-		{
-		case SideType.Top: return new Vector2(0f, -1f);
-		case SideType.Bottom: return new Vector2(0f, 1f);
-		case SideType.Left: return new Vector2(1f, 0f);
-		case SideType.Right: return new Vector2(-1f, 0f);
-		default:
-			throw new System.NotImplementedException();
-		}
+		// Set private fields
+		this._startPoint = startPoint;
+		this._endPoint = endPoint;
 	}
 
 	public void DrawLine()
@@ -171,8 +170,7 @@ public class Line : IDisposable, ICloneable
 			// Add Line's Head
 			if (i == 0)
 			{
-				// Add Line head - Left middle point
-				lastPoint = new Vector2(cell.GetRectPoints().xMin, cell.Center.y);
+				lastPoint = GetLineStart(cell);
 			}
 
 			// Part 1
@@ -186,7 +184,7 @@ public class Line : IDisposable, ICloneable
 			}
 			else
 			{
-				// Prepare line for Stumb
+				// Prepare line for Stump
 				cell.GetExternalIntersectionPoint(line, cell.Center, lastPoint - cell.Center, LineWidth / 3f, out side, out lastPoint);
 			}
 			_line.points2.Add(lastPoint);
@@ -200,9 +198,9 @@ public class Line : IDisposable, ICloneable
 			}
 			else
 			{
-				// Draw Stumb to have nice line ending
+				// Draw Stump to have nice line ending
 				_line.points2.Add(lastPoint);
-				_line.points2.Add(lastPoint + LineWidth / 4f * GetStumbVector(side));
+				_line.points2.Add(lastPoint + LineWidth / 4f * GetStumpVector(side));
 			}
 
 			// Part 3
@@ -210,7 +208,7 @@ public class Line : IDisposable, ICloneable
 			// If current point is the last one, take Right Cell's point
 			if (i == Cells.Length - 1)
 			{
-				nextPoint = new Vector2(cell.GetRectPoints().xMax, cell.Center.y);
+				nextPoint = GetLineEnding(cell);
 			}
 			// Otherwise take next Cell's center as point
 			else 
@@ -230,8 +228,8 @@ public class Line : IDisposable, ICloneable
 			else
 			{
 				cell.GetInternalIntersectionPoint(line, cell.Center, nextPoint - cell.Center, LineWidth / 3f, out side, out lastPoint);
-				// Start line with keeping Stumb in mind
-				_line.points2.Add(lastPoint + LineWidth / 4f * GetStumbVector(side));
+				// Draw Stump
+				_line.points2.Add(lastPoint + LineWidth / 4f * GetStumpVector(side));
 				_line.points2.Add(lastPoint);
 			}
 
@@ -271,6 +269,47 @@ public class Line : IDisposable, ICloneable
 		return this.MemberwiseClone();
 	}
 	#endregion
+	
+	private Vector2 GetStumpVector(SideType side)
+	{
+		switch (side)
+		{
+		case SideType.Top: return new Vector2(0f, -1f);
+		case SideType.Bottom: return new Vector2(0f, 1f);
+		case SideType.Left: return new Vector2(1f, 0f);
+		case SideType.Right: return new Vector2(-1f, 0f);
+		default:
+			throw new System.NotImplementedException();
+		}
+	}
+	
+	private Vector2 GetLineStart(Cell cell)
+    {
+		if (_startPoint.HasValue)
+		{
+			// Use custom start point
+			return _startPoint.Value;
+		}
+		else
+		{
+			// Line head - Left middle point
+			return new Vector2(cell.GetRectPoints().xMin, cell.Center.y);
+        }
+    }
+    
+    private Vector2 GetLineEnding(Cell cell)
+    {
+		if (_endPoint.HasValue)
+		{
+			// Use custom end point
+			return _endPoint.Value;
+		}
+		else
+		{
+			// Line tail - Right middle point
+			return new Vector2(cell.GetRectPoints().xMax, cell.Center.y);
+		}
+	}
 }
 
 [RequireComponent(typeof(CombinationsController))]
